@@ -246,6 +246,15 @@
   .ex .closing i{display:block;height:100%;width:100%;background:var(--accent-2);animation:closingBar 3s linear forwards}
   @keyframes closingBar{to{width:0}}
 
+  /* repaso rápido de valores mientras la tarjeta está por plegarse */
+  .ex.review .field input,
+  .ex.review .set .n i{animation:skimPulse 1.2s ease-in-out infinite}
+  @keyframes skimPulse{
+    0%,100%{font-weight:600;color:var(--txt)}
+    50%{font-weight:800;color:var(--accent-2)}
+  }
+  .ex.review .set .n i{border-bottom-color:transparent}
+
   .sets{padding:0 12px 12px;display:grid;gap:8px;grid-template-columns:1fr}
   .set{
     display:grid;grid-template-columns:40px 1fr 1fr 34px;align-items:center;gap:7px;
@@ -547,13 +556,17 @@
   <div class="row">
     <p>Descanso<small>Duración por defecto</small></p>
     <select class="sel-borg" id="restSel">
-      <option value="45">45 s</option><option value="60">60 s</option>
+      <option value="30">30 s</option><option value="45">45 s</option><option value="60">60 s</option>
       <option value="90">90 s</option><option value="120">2 min</option><option value="180">3 min</option>
     </select>
   </div>
   <div class="row">
     <p>Aviso al terminar<small>Muestra un mensaje en pantalla al acabar el descanso</small></p>
     <div class="switch" id="swAlert"><i></i></div>
+  </div>
+  <div class="row">
+    <p>Sonidos<small>Respuesta sonora al tocar y al terminar el descanso</small></p>
+    <div class="switch" id="swSound"><i></i></div>
   </div>
   <div class="row">
     <p>Datos<small>Todo se guarda en este dispositivo</small></p>
@@ -699,12 +712,12 @@ const TOTAL_WEEKS = 16;
    ESTADO / PERSISTENCIA
    ========================================================= */
 const KEY = 'train.gm.v1';
-const FALLBACK_CFG = { theme:'dark', autoTimer:true, restSeconds:60, restEndPopup:true };
+const FALLBACK_CFG = { theme:'dark', autoTimer:true, restSeconds:60, restEndPopup:true, sounds:true };
 let CONFIG = FALLBACK_CFG;
 const defaults = () => ({ start:isoMonday(new Date()), week:1, prefs:{}, log:{} });
 
 // prefs solo guarda lo que el usuario cambió a mano; el resto viene de config.json
-const CFG_OF = { theme:'theme', autoTimer:'autoTimer', rest:'restSeconds', endAlert:'restEndPopup' };
+const CFG_OF = { theme:'theme', autoTimer:'autoTimer', rest:'restSeconds', endAlert:'restEndPopup', sounds:'sounds' };
 function pref(k){
   return state.prefs[k] !== undefined ? state.prefs[k] : CONFIG[CFG_OF[k]];
 }
@@ -728,7 +741,8 @@ async function loadConfig(){
       theme: j.theme === 'light' ? 'light' : 'dark',
       autoTimer: j.autoTimer !== false,
       restEndPopup: j.restEndPopup !== false,
-      restSeconds: [45,60,90,120,180].includes(rest) ? rest : FALLBACK_CFG.restSeconds
+      sounds: j.sounds !== false,
+      restSeconds: [30,45,60,90,120,180].includes(rest) ? rest : FALLBACK_CFG.restSeconds
     };
   }catch(e){
     return FALLBACK_CFG;
@@ -1084,11 +1098,13 @@ main.addEventListener('click', async ev => {
     const i = +btn.closest('.set').dataset.set;
     e.sets[i].d = !e.sets[i].d;
     if(e.sets[i].d){
+      sfx('check'); buzz([35]);
       if(!e.sets[i].w && i > 0) e.sets[i].w = e.sets[i-1].w;
       if(!e.sets[i].r) e.sets[i].r = /^\d+$/.test(x.reps) ? x.reps : '';
       if(pref('autoTimer')) startTimer(pref('rest'), { exId:x.id, i, week:state.week });
       if(e.sets.every(s => s.d)) openEx.add(x.id);   // se pliega después, no al instante
     } else {
+      sfx('undo');
       openEx.delete(x.id);
     }
     save(1); refresh();
@@ -1096,7 +1112,7 @@ main.addEventListener('click', async ev => {
   else if(act === 'toggle-ex'){
     const willCollapse = !card.classList.contains('collapsed');
     if(willCollapse) openEx.delete(x.id); else openEx.add(x.id);
-    card.querySelectorAll('.closing').forEach(n => n.remove());
+    cancelCollapse(card);
     card.classList.toggle('collapsed', willCollapse);
     if(!willCollapse) markClampedNotes();
   }
@@ -1118,6 +1134,7 @@ main.addEventListener('click', async ev => {
     });
     if(!ok) return;
     e.sets.pop(); e.n = e.sets.length;
+    sfx('warn');
     save(1); refresh(); toast('Serie eliminada');
   }
   else if(act === 'note-open'){
@@ -1129,6 +1146,7 @@ main.addEventListener('click', async ev => {
     const ta = card.querySelector('textarea');
     e.notes = ta.value.trim();
     delete drafts[x.id]; noteOpen.delete(x.id);
+    sfx('save');
     save(); refresh();
   }
   else if(act === 'note-cancel'){
@@ -1176,21 +1194,43 @@ function findEx(id){
    ========================================================= */
 const tEl = document.getElementById('timer'), tTxt = document.getElementById('timerTxt');
 const HOT_AT = 30;
-let tLeft = 0, tInt = null, tStartAt = 0;
+let tLeft = 0, tInt = null, tStartAt = 0, tEndAt = 0;
 let timerSet = null;   // serie que arrancó el descanso en curso
 
 function fmtDur(sec){
   return Math.floor(sec/60) + ':' + String(sec % 60).padStart(2,'0');
 }
 function startTimer(sec, target){
-  tLeft = sec; tStartAt = Date.now(); timerSet = target || null;
+  tStartAt = Date.now();
+  tEndAt = tStartAt + sec * 1000;
+  timerSet = target || null;
   tEl.classList.add('show');
   clearInterval(tInt);
-  paint(); markTimingSet();
-  tInt = setInterval(() => {
-    tLeft--; paint();
-    if(tLeft <= 0){ const el = Math.round((Date.now() - tStartAt)/1000); stopTimer(true); beep(); restEnded(el); }
-  }, 1000);
+  armAlarm(sec);
+  tick(); markTimingSet();
+  tInt = setInterval(tick, 250);
+}
+// el conteo se deriva del reloj: iOS congela los intervalos con la pantalla bloqueada
+function tick(){
+  const prev = tLeft;
+  const left = Math.max(0, Math.ceil((tEndAt - Date.now()) / 1000));
+  if(left !== tLeft){
+    tLeft = left; paint();
+    if(left > 0) cueCrossing(prev, left);
+  }
+  if(Date.now() >= tEndAt){
+    const elapsed = Math.round((Date.now() - tStartAt) / 1000);
+    const alreadyRang = alarmArmed;
+    releaseAlarm();
+    stopTimer(true);
+    if(!alreadyRang) sfx('alert');   // la alarma agendada ya sonó, aunque el móvil estuviera bloqueado
+    buzz(); restEnded(elapsed);
+  }
+}
+// avisos al cruzar los umbrales; si se saltan varios de golpe suena solo el más urgente
+function cueCrossing(prev, left){
+  if(prev > 10 && left <= 10){ sfx('mark10'); buzz([60,40,60]); }
+  else if(prev > HOT_AT && left <= HOT_AT){ sfx('mark30'); buzz([45]); }
 }
 function paint(){
   const m = Math.floor(tLeft/60), s = tLeft % 60;
@@ -1200,6 +1240,7 @@ function paint(){
 function stopTimer(keepTarget){
   clearInterval(tInt); tInt = null;
   tEl.classList.remove('show','hot');
+  disarmAlarm();
   if(!keepTarget){ timerSet = null; markTimingSet(); }
 }
 // resalta en la tarjeta la serie a la que pertenece el descanso activo
@@ -1254,6 +1295,7 @@ function saveSetRest(target, seconds){
   const e = (state.log['w' + target.week] || {})[target.exId];
   if(!e || !e.sets[target.i]) return;
   e.sets[target.i].rest = seconds;
+  sfx('save');
   save(); refresh();
   toast(seconds ? `S${target.i+1}: descanso de ${fmtDur(seconds)}` : `S${target.i+1}: descanso quitado`);
 }
@@ -1268,18 +1310,26 @@ function maybeScheduleCollapse(target){
 function scheduleCollapse(exId){
   const card = main.querySelector(`.ex[data-ex="${exId}"]`);
   if(!card || card.classList.contains('collapsed')) return;
-  card.querySelectorAll('.closing').forEach(n => n.remove());
+  cancelCollapse(card);
+  // 3 s de repaso, más 0.375 s por cada serie a partir de la quinta
+  const dur = 3000 + Math.max(0, card.querySelectorAll('.set').length - 4) * 375;
   const bar = document.createElement('span');
   bar.className = 'closing';
-  bar.innerHTML = '<i></i>';
+  bar.innerHTML = `<i style="animation-duration:${dur}ms"></i>`;
   card.appendChild(bar);
-  clearTimeout(closeT);
+  card.classList.add('review');
   closeT = setTimeout(() => {
-    bar.remove();
+    cancelCollapse(card);
     openEx.delete(exId);
     const live = main.querySelector(`.ex[data-ex="${exId}"]`);
     if(live) live.classList.add('collapsed');
-  }, 3000);
+  }, dur);
+}
+function cancelCollapse(card){
+  clearTimeout(closeT);
+  if(!card) return;
+  card.classList.remove('review');
+  card.querySelectorAll('.closing').forEach(n => n.remove());
 }
 
 /* ---- editor manual de descanso ---- */
@@ -1332,35 +1382,133 @@ document.getElementById('timerStop').onclick = () => {
   stopTimer(true);
   restEnded(elapsed, false);
 };
-document.getElementById('timerAdd').onclick = () => { tLeft += 30; paint(); };
+document.getElementById('timerAdd').onclick = () => {
+  tEndAt += 30000;
+  armAlarm(Math.max(0, (tEndAt - Date.now()) / 1000));
+  tick();
+};
 
-let actx;
-function beep(){
+/* =========================================================
+   SONIDO
+   ========================================================= */
+let actx = null;
+// iOS solo habilita el contexto dentro de un gesto real y lo suspende al volver del bloqueo
+function audio(){
   try{
-    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
-    [0,.18,.36].forEach(t => {
-      const o = actx.createOscillator(), g = actx.createGain();
-      o.type = 'sine'; o.frequency.value = 880;
-      g.gain.setValueAtTime(.0001, actx.currentTime + t);
-      g.gain.exponentialRampToValueAtTime(.25, actx.currentTime + t + .02);
-      g.gain.exponentialRampToValueAtTime(.0001, actx.currentTime + t + .14);
-      o.connect(g).connect(actx.destination);
-      o.start(actx.currentTime + t); o.stop(actx.currentTime + t + .16);
-    });
-    if(navigator.vibrate) navigator.vibrate([120,60,120]);
-  }catch(e){}
+    if(!actx){
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if(!Ctx) return null;
+      actx = new Ctx();
+      if(navigator.audioSession) navigator.audioSession.type = 'playback';  // ignora el switch de silencio (iOS 16.4+)
+    }
+    if(actx.state === 'suspended') actx.resume();
+    return actx;
+  }catch(e){ return null; }
 }
+function unlockAudio(){
+  const ctx = audio(); if(!ctx) return;
+  const src = ctx.createBufferSource();
+  src.buffer = ctx.createBuffer(1, 1, 22050);
+  src.connect(ctx.destination);
+  src.start(0);
+}
+['pointerdown','touchend','click'].forEach(t =>
+  document.addEventListener(t, unlockAudio, { once:true, passive:true }));
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState !== 'visible') return;
+  audio();
+  if(tInt) tick();
+});
+
+const SFX = {
+  tap:    [{ f:520,  d:.05, g:.05, w:'triangle' }],
+  check:  [{ f:660,  d:.07, g:.10 }, { t:.06, f:990, d:.10, g:.09 }],
+  undo:   [{ f:440,  d:.07, g:.08 }, { t:.06, f:310, d:.10, g:.07 }],
+  save:   [{ f:740,  d:.06, g:.09 }, { t:.05, f:1110, d:.13, g:.08 }],
+  warn:   [{ f:300,  d:.16, g:.12, w:'square' }],
+  mark30: [{ f:588,  d:.11, g:.13 }, { t:.14, f:784, d:.14, g:.13 }],
+  mark10: [{ f:1046, d:.08, g:.17 }, { t:.12, f:1046, d:.10, g:.17 }],
+  alert:  [{ f:880,  d:.14, g:.25 }, { t:.18, f:880, d:.14, g:.25 }, { t:.36, f:880, d:.16, g:.25 }]
+};
+function sfx(name, at){
+  if(!pref('sounds')) return [];
+  const ctx = audio();
+  if(!ctx || ctx.state !== 'running') return [];
+  const base = at !== undefined ? at : ctx.currentTime;
+  return (SFX[name] || []).map(n => {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    const t0 = base + (n.t || 0);
+    o.type = n.w || 'sine';
+    o.frequency.setValueAtTime(n.f, t0);
+    g.gain.setValueAtTime(.0001, t0);
+    g.gain.exponentialRampToValueAtTime(n.g, t0 + .012);
+    g.gain.exponentialRampToValueAtTime(.0001, t0 + n.d);
+    o.connect(g).connect(ctx.destination);
+    o.start(t0); o.stop(t0 + n.d + .03);
+    return o;
+  });
+}
+function buzz(pattern){
+  if(pref('sounds') && navigator.vibrate) navigator.vibrate(pattern || [120,60,120]);
+}
+
+/* ---- alarma con la pantalla bloqueada ----
+   iOS suspende el JS al bloquear, pero no el audio: la alarma se agenda por adelantado
+   en la línea de tiempo del AudioContext y un tono inaudible mantiene viva la sesión. */
+let alarmNodes = [], alarmArmed = false, keepAlive = null;
+
+function armAlarm(seconds){
+  disarmAlarm();
+  const ctx = audio();
+  if(!ctx || ctx.state !== 'running' || !pref('sounds')) return;
+  alarmNodes = sfx('alert', ctx.currentTime + seconds);
+  alarmArmed = alarmNodes.length > 0;
+  if(alarmArmed) startKeepAlive(ctx);
+}
+function disarmAlarm(){
+  alarmNodes.forEach(o => { try{ o.stop(); }catch(e){} });
+  alarmNodes = []; alarmArmed = false;
+  stopKeepAlive();
+}
+// al vencer no se cortan los nodos: la alarma agendada debe terminar de sonar
+function releaseAlarm(){
+  alarmNodes = []; alarmArmed = false;
+  setTimeout(stopKeepAlive, 1200);
+}
+function startKeepAlive(ctx){
+  if(keepAlive) return;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.frequency.value = 30;
+  g.gain.value = .0008;          // inaudible, pero la sesión de audio cuenta como activa
+  o.connect(g).connect(ctx.destination);
+  o.start();
+  keepAlive = o;
+}
+function stopKeepAlive(){
+  if(!keepAlive) return;
+  try{ keepAlive.stop(); }catch(e){}
+  keepAlive = null;
+}
+
+// clic genérico de interfaz; los controles con sonido propio se excluyen
+const OWN_SFX = '#restSave,#restClear,#swSound,[data-act="set"],[data-act="note-save"]';
+document.addEventListener('click', ev => {
+  const t = ev.target.closest('button,.switch,.chip');
+  if(!t || t.disabled || t.matches(OWN_SFX)) return;
+  sfx('tap');
+}, true);
 
 /* =========================================================
    AJUSTES / TOAST
    ========================================================= */
 const sheet = document.getElementById('sheet'), sheetBg = document.getElementById('sheetBg');
 const swTimer = document.getElementById('swTimer'), restSel = document.getElementById('restSel');
-const swAlert = document.getElementById('swAlert');
+const swAlert = document.getElementById('swAlert'), swSound = document.getElementById('swSound');
 
 function openSheet(){
   swTimer.classList.toggle('on', !!pref('autoTimer'));
   swAlert.classList.toggle('on', !!pref('endAlert'));
+  swSound.classList.toggle('on', !!pref('sounds'));
   restSel.value = String(pref('rest'));
   sheet.classList.add('show'); sheetBg.classList.add('show');
 }
@@ -1370,6 +1518,13 @@ document.getElementById('sheetClose').onclick = closeSheet;
 sheetBg.onclick = closeSheet;
 swTimer.onclick = () => { const v = !pref('autoTimer'); setPref('autoTimer', v); swTimer.classList.toggle('on', v); };
 swAlert.onclick = () => { const v = !pref('endAlert'); setPref('endAlert', v); swAlert.classList.toggle('on', v); };
+swSound.onclick = () => {
+  const v = !pref('sounds');
+  setPref('sounds', v);
+  swSound.classList.toggle('on', v);
+  if(v){ sfx('save'); if(tInt) armAlarm(Math.max(0, (tEndAt - Date.now()) / 1000)); }
+  else disarmAlarm();
+};
 restSel.onchange = () => setPref('rest', +restSel.value);
 
 document.getElementById('btnExport').onclick = () => {
