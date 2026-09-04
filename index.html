@@ -1289,6 +1289,7 @@ function startTimer(sec, target){
 }
 // el conteo se deriva del reloj: iOS congela los intervalos con la pantalla bloqueada
 function tick(){
+  pruneStaleAlarm();
   const prev = tLeft;
   const left = Math.max(0, Math.ceil((tEndAt - Date.now()) / 1000));
   if(left !== tLeft){
@@ -1503,16 +1504,21 @@ function unlockAudio(){
 ['pointerdown','touchend','click'].forEach(t =>
   document.addEventListener(t, unlockAudio, { once:true, passive:true }));
 document.addEventListener('visibilitychange', () => {
-  if(document.visibilityState !== 'visible') return;
+  if(document.visibilityState !== 'visible'){
+    if(!tInt) disarmAlarm();               // al ocultarse sin descanso activo no debe quedar nada
+    return;
+  }
   sessionSet = false; setAudioSession();   // iOS reinicia la categoría tras una interrupción
   const ctx = audio();
   // tras el bloqueo, resume() fuera de un gesto no siempre restaura el audio en iOS
   if(ctx && ctx.state !== 'running'){
     document.addEventListener('pointerdown', () => { try{ ctx.resume(); }catch(e){} }, { once:true, passive:true });
   }
+  pruneStaleAlarm();
   if(tInt) tick();
   else disarmAlarm();                      // sin descanso activo no debe quedar nada agendado
 });
+addEventListener('pagehide', () => { if(!tInt) disarmAlarm(); });
 
 /* Todos los sonidos pasan por un limitador con ganancia de compensación: sube el nivel
    percibido sin recortar y empareja la sonoridad entre acciones. Los clics llevan un
@@ -1603,13 +1609,14 @@ function buzz(pattern){
    iOS suspende el JS al bloquear, pero no el audio: la alarma se agenda por adelantado
    en la línea de tiempo del AudioContext. El tono de mantenimiento es opcional porque
    ocupa la sesión de audio de forma continua y detiene la música de otras apps. */
-let alarmNodes = [], alarmArmed = false, alarmAt = 0, keepAlive = null;
+let alarmNodes = [], alarmArmed = false, alarmAt = 0, alarmWallAt = 0, keepAlive = null;
 
 function armAlarm(seconds){
   disarmAlarm();
   const ctx = audio();
   if(!ctx || ctx.state !== 'running' || !pref('sounds')) return;
   alarmAt = ctx.currentTime + seconds;
+  alarmWallAt = Date.now() + seconds * 1000;
   alarmNodes = sfx('alert', alarmAt);
   alarmArmed = alarmNodes.length > 0;
   if(alarmArmed && pref('bgAlarm')) startKeepAlive(ctx);
@@ -1617,6 +1624,10 @@ function armAlarm(seconds){
 // el reloj del contexto se congela al suspenderse: si no alcanzó al instante agendado, no sonó
 function alarmDidRing(){
   return alarmArmed && actx && actx.state === 'running' && actx.currentTime >= alarmAt;
+}
+// si el audio se atrasó respecto al reloj real, el nodo sonaría tarde: se elimina
+function pruneStaleAlarm(){
+  if(alarmArmed && Date.now() > alarmWallAt + 3000 && !alarmDidRing()) disarmAlarm();
 }
 // Safari no siempre respeta stop() en un nodo agendado a futuro: además se silencia y desconecta
 function disarmAlarm(){
