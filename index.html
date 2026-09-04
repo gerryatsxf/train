@@ -1172,8 +1172,8 @@ main.addEventListener('click', async ev => {
     } else {
       sfx('undo'); buzz([25]);
       openEx.delete(x.id);
-      if(timerSet && timerSet.exId === x.id && timerSet.i === i && timerSet.week === state.week){
-        stopTimer();                 // el descanso pertenecía a esta serie: se descarta
+      if(tInt){                      // desmarcar invalida el descanso en curso, sea cual sea
+        stopTimer();
         toast('Descanso cancelado');
       }
     }
