@@ -584,6 +584,10 @@
     <div class="switch" id="swSound"><i></i></div>
   </div>
   <div class="row">
+    <p>Alarma con pantalla bloqueada<small>Mantiene el audio activo durante el descanso; pausa la música de otras apps</small></p>
+    <div class="switch" id="swBg"><i></i></div>
+  </div>
+  <div class="row">
     <p>Datos<small>Todo se guarda en este dispositivo</small></p>
     <div style="display:flex;gap:8px">
       <button class="btn" id="btnExport">Exportar</button>
@@ -727,12 +731,12 @@ const TOTAL_WEEKS = 16;
    ESTADO / PERSISTENCIA
    ========================================================= */
 const KEY = 'train.gm.v1';
-const FALLBACK_CFG = { theme:'dark', autoTimer:true, restSeconds:60, restEndPopup:true, sounds:true };
+const FALLBACK_CFG = { theme:'dark', autoTimer:true, restSeconds:60, restEndPopup:true, sounds:true, lockedAlarm:false };
 let CONFIG = FALLBACK_CFG;
 const defaults = () => ({ start:isoMonday(new Date()), week:1, prefs:{}, log:{} });
 
 // prefs solo guarda lo que el usuario cambió a mano; el resto viene de config.json
-const CFG_OF = { theme:'theme', autoTimer:'autoTimer', rest:'restSeconds', endAlert:'restEndPopup', sounds:'sounds' };
+const CFG_OF = { theme:'theme', autoTimer:'autoTimer', rest:'restSeconds', endAlert:'restEndPopup', sounds:'sounds', bgAlarm:'lockedAlarm' };
 function pref(k){
   return state.prefs[k] !== undefined ? state.prefs[k] : CONFIG[CFG_OF[k]];
 }
@@ -757,6 +761,7 @@ async function loadConfig(){
       autoTimer: j.autoTimer !== false,
       restEndPopup: j.restEndPopup !== false,
       sounds: j.sounds !== false,
+      lockedAlarm: j.lockedAlarm === true,
       restSeconds: [30,45,60,90,120,180].includes(rest) ? rest : FALLBACK_CFG.restSeconds
     };
   }catch(e){
@@ -1157,13 +1162,15 @@ main.addEventListener('click', async ev => {
     const i = +btn.closest('.set').dataset.set;
     e.sets[i].d = !e.sets[i].d;
     if(e.sets[i].d){
-      sfx('check'); buzz([35]);
       if(!e.sets[i].w && i > 0) e.sets[i].w = e.sets[i-1].w;
       if(!e.sets[i].r) e.sets[i].r = /^\d+$/.test(x.reps) ? x.reps : '';
       if(pref('autoTimer')) startTimer(pref('rest'), { exId:x.id, i, week:state.week });
-      if(e.sets.every(s => s.d)) openEx.add(x.id);   // se pliega después, no al instante
+      const full = e.sets.every(s => s.d);
+      if(full) openEx.add(x.id);   // se pliega después, no al instante
+      sfx(full ? 'finish' : 'check');
+      buzz(full ? [30,50,30] : [35]);
     } else {
-      sfx('undo');
+      sfx('undo'); buzz([25]);
       openEx.delete(x.id);
     }
     save(1); refresh();
@@ -1175,6 +1182,12 @@ main.addEventListener('click', async ev => {
     card.classList.toggle('collapsed', willCollapse);
     sfx(willCollapse ? 'fold' : 'unfold');
     if(!willCollapse) markClampedNotes();
+  }
+  else if(act === 'rest-stats'){
+    const st = restStats(e);
+    if(!st){ toast('Aún sin descansos registrados aquí'); return; }
+    const word = st.lv === 'ok' ? 'constante' : st.lv === 'mid' ? 'algo irregular' : 'muy irregular';
+    toast(`Media ${fmtDur(Math.round(st.mean))} ±${fmtDur(Math.round(st.sd))} · meta ${fmtDur(pref('rest'))} · ${word}`);
   }
   else if(act === 'rest'){
     openRestEdit(x, +btn.closest('.set').dataset.set);
@@ -1280,10 +1293,10 @@ function tick(){
   }
   if(Date.now() >= tEndAt){
     const elapsed = Math.round((Date.now() - tStartAt) / 1000);
-    const alreadyRang = alarmArmed;
+    const alreadyRang = alarmDidRing();
     releaseAlarm();
     stopTimer(true);
-    if(!alreadyRang) sfx('alert');   // la alarma agendada ya sonó, aunque el móvil estuviera bloqueado
+    if(!alreadyRang) sfx('alert');   // solo si la alarma agendada no alcanzó a sonar
     buzz(); restEnded(elapsed);
   }
 }
@@ -1340,7 +1353,7 @@ function restEnded(elapsed, ended = true){
     title,
     text:`Serie S${target.i+1} de ${ex.name}: ${ended ? 'descansaste' : 'llevas'} ${fmtDur(elapsed)} y el contador sigue corriendo. `
        + 'Al registrar se guarda el total, no solo lo del temporizador.',
-    ok: label(), okClass:'primary', cancel:true, cancelText:'Cerrar'
+    ok: label(), okClass:'primary', okSilent:true, cancel:true, cancelText:'Cerrar'
   });
   extraInt = setInterval(() => { document.getElementById('modalYes').textContent = label(); }, 1000);
 
@@ -1466,12 +1479,14 @@ function audio(){
     return actx;
   }catch(e){ return null; }
 }
-// 'transient' convive con la música de otras apps (solo la atenúa un instante)
-// y, a diferencia de 'ambient', no lo silencia el switch de silencio. iOS 16.4+
+// 'transient' convive con la música de otras apps (solo la atenúa un instante).
+// Se verifica que el valor haya quedado aplicado: en versiones viejas la asignación se ignora.
 function setAudioSession(){
-  if(!navigator.audioSession) return;
-  try{ navigator.audioSession.type = 'transient'; }
-  catch(e){ try{ navigator.audioSession.type = 'playback'; }catch(e2){} }
+  const s = navigator.audioSession;
+  if(!s) return;
+  for(const t of ['transient', 'ambient']){
+    try{ s.type = t; if(s.type === t) return; }catch(e){}
+  }
 }
 function unlockAudio(){
   const ctx = audio(); if(!ctx) return;
@@ -1490,8 +1505,9 @@ document.addEventListener('visibilitychange', () => {
 
 const SFX = {
   tap:    [{ f:520,  d:.05, g:.05, w:'triangle' }],
-  check:  [{ f:660,  d:.07, g:.10 }, { t:.06, f:990, d:.10, g:.09 }],
-  undo:   [{ f:440,  d:.07, g:.08 }, { t:.06, f:310, d:.10, g:.07 }],
+  check:  [{ f:1568, d:.03, g:.06, w:'triangle' }, { t:.02, f:784, d:.09, g:.11 }, { t:.08, f:1175, d:.14, g:.10 }],
+  undo:   [{ f:587,  d:.07, g:.07, w:'triangle' }, { t:.06, f:392, d:.13, g:.06 }],
+  finish: [{ f:784,  d:.08, g:.11 }, { t:.07, f:988, d:.09, g:.11 }, { t:.15, f:1319, d:.22, g:.12 }],
   save:   [{ f:740,  d:.06, g:.09 }, { t:.05, f:1110, d:.13, g:.08 }],
   warn:   [{ f:300,  d:.16, g:.12, w:'square' }],
   fold:   [{ f:523,  d:.08, g:.08 }, { t:.07, f:392, d:.12, g:.07 }],
@@ -1524,16 +1540,22 @@ function buzz(pattern){
 
 /* ---- alarma con la pantalla bloqueada ----
    iOS suspende el JS al bloquear, pero no el audio: la alarma se agenda por adelantado
-   en la línea de tiempo del AudioContext y un tono inaudible mantiene viva la sesión. */
-let alarmNodes = [], alarmArmed = false, keepAlive = null;
+   en la línea de tiempo del AudioContext. El tono de mantenimiento es opcional porque
+   ocupa la sesión de audio de forma continua y detiene la música de otras apps. */
+let alarmNodes = [], alarmArmed = false, alarmAt = 0, keepAlive = null;
 
 function armAlarm(seconds){
   disarmAlarm();
   const ctx = audio();
   if(!ctx || ctx.state !== 'running' || !pref('sounds')) return;
-  alarmNodes = sfx('alert', ctx.currentTime + seconds);
+  alarmAt = ctx.currentTime + seconds;
+  alarmNodes = sfx('alert', alarmAt);
   alarmArmed = alarmNodes.length > 0;
-  if(alarmArmed) startKeepAlive(ctx);
+  if(alarmArmed && pref('bgAlarm')) startKeepAlive(ctx);
+}
+// el reloj del contexto se congela al suspenderse: si no alcanzó al instante agendado, no sonó
+function alarmDidRing(){
+  return alarmArmed && actx && actx.state === 'running' && actx.currentTime >= alarmAt;
 }
 function disarmAlarm(){
   alarmNodes.forEach(o => { try{ o.stop(); }catch(e){} });
@@ -1561,7 +1583,7 @@ function stopKeepAlive(){
 }
 
 // clic genérico de interfaz; los controles con sonido propio se excluyen
-const OWN_SFX = '#restSave,#restClear,#swSound,[data-act="set"],[data-act="note-save"]';
+const OWN_SFX = '#restSave,#restClear,#swSound,[data-silent],[data-act="set"],[data-act="note-save"]';
 document.addEventListener('click', ev => {
   const t = ev.target.closest('button,.switch,.chip');
   if(!t || t.disabled || t.matches(OWN_SFX)) return;
@@ -1574,11 +1596,13 @@ document.addEventListener('click', ev => {
 const sheet = document.getElementById('sheet'), sheetBg = document.getElementById('sheetBg');
 const swTimer = document.getElementById('swTimer'), restSel = document.getElementById('restSel');
 const swAlert = document.getElementById('swAlert'), swSound = document.getElementById('swSound');
+const swBg = document.getElementById('swBg');
 
 function openSheet(){
   swTimer.classList.toggle('on', !!pref('autoTimer'));
   swAlert.classList.toggle('on', !!pref('endAlert'));
   swSound.classList.toggle('on', !!pref('sounds'));
+  swBg.classList.toggle('on', !!pref('bgAlarm'));
   restSel.value = String(pref('rest'));
   sheet.classList.add('show'); sheetBg.classList.add('show');
 }
@@ -1594,6 +1618,13 @@ swSound.onclick = () => {
   swSound.classList.toggle('on', v);
   if(v){ sfx('save'); if(tInt) armAlarm(Math.max(0, (tEndAt - Date.now()) / 1000)); }
   else disarmAlarm();
+};
+swBg.onclick = () => {
+  const v = !pref('bgAlarm');
+  setPref('bgAlarm', v);
+  swBg.classList.toggle('on', v);
+  if(!v) stopKeepAlive();
+  else if(tInt) armAlarm(Math.max(0, (tEndAt - Date.now()) / 1000));
 };
 restSel.onchange = () => setPref('rest', +restSel.value);
 
@@ -1621,12 +1652,13 @@ document.getElementById('btnWipe').onclick = async () => {
 const modal = document.getElementById('modal'), modalBg = document.getElementById('modalBg');
 let resolveConfirm = null, extraInt = null;
 
-function askConfirm({ title, text, ok = 'Eliminar', okClass = 'solid-danger', cancel = true, cancelText = 'Cancelar' }){
+function askConfirm({ title, text, ok = 'Eliminar', okClass = 'solid-danger', okSilent = false, cancel = true, cancelText = 'Cancelar' }){
   document.getElementById('modalTitle').textContent = title;
   document.getElementById('modalText').textContent = text;
   const yes = document.getElementById('modalYes');
   yes.textContent = ok;
   yes.className = 'btn ' + okClass;
+  yes.toggleAttribute('data-silent', okSilent);   // el flujo que confirma pone su propio sonido
   const no = document.getElementById('modalNo');
   no.textContent = cancelText;
   no.style.display = cancel ? '' : 'none';
