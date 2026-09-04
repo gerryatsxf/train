@@ -208,14 +208,20 @@
 
   /* ---------- EXERCISE CARD ---------- */
   .ex{
-    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
     overflow:hidden;transition:border-color .2s,box-shadow .2s
   }
   .ex.done{border-color:var(--ok-tint-line)}
   .ex-top{display:flex;gap:10px;align-items:center;padding:11px 12px 7px}
+  .ex.collapsed .ex-top{padding-bottom:11px}
+  .ex-top[data-act]{cursor:pointer}
+  .ex-top .tick{
+    width:21px;height:21px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:11px;
+    background:var(--ok-fill);color:var(--ok-ink);border:1px solid var(--ok-edge)
+  }
   .ex-name{flex:1;min-width:0}
   .ex-name h3{margin:0;font-size:15px;font-weight:700;letter-spacing:-.2px;line-height:1.3}
-  .exsub{
+  .exsub,.exdone{
     margin-top:2px;font-size:12px;color:var(--txt-3);font-variant-numeric:tabular-nums;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis
   }
@@ -224,28 +230,45 @@
   .exsub .target{color:#0369a1;font-weight:600}
   :root[data-theme="dark"] .exsub .tempo{color:#fbbf24}
   :root[data-theme="dark"] .exsub .target{color:#7dd3fc}
-  .chev{color:var(--txt-3);font-size:17px;flex:none;line-height:1;transform:rotate(90deg);transition:transform .18s}
-  .ex-top .chev{transform:rotate(-90deg)}
+  .ex.collapsed .exsub{display:none}
+  .ex:not(.collapsed) .exdone{display:none}
+  .chev{color:var(--txt-3);font-size:17px;flex:none;line-height:1;transform:rotate(90deg);transition:transform .28s ease}
+  .ex:not(.collapsed) .chev{transform:rotate(-90deg)}
 
-  /* ejercicio completado y colapsado */
-  .ex-top[data-act]{cursor:pointer}
-  .ex-sum{width:100%;display:flex;align-items:center;gap:9px;padding:11px 12px;text-align:left}
-  .ex-sum .tick{
-    width:21px;height:21px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:11px;
-    background:var(--ok-fill);color:var(--ok-ink);border:1px solid var(--ok-edge)
-  }
-  .ex-sum .nm{flex:1;min-width:0;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .ex-sum .nt{font-size:11px;flex:none;opacity:.75}
-  .ex-sum .rs{font-size:12px;color:var(--txt-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+  /* plegado suave del cuerpo de la tarjeta */
+  .fold{display:grid;grid-template-rows:1fr;transition:grid-template-rows .3s ease}
+  .ex.collapsed .fold{grid-template-rows:0fr}
+  .fold > .inner{overflow:hidden;min-height:0;transition:opacity .22s ease}
+  .ex.collapsed .fold > .inner{opacity:0}
+
+  /* cuenta regresiva discreta antes de plegar */
+  .ex .closing{position:absolute;left:0;right:0;top:0;height:2px;background:var(--track);overflow:hidden}
+  .ex .closing i{display:block;height:100%;width:100%;background:var(--accent-2);animation:closingBar 3s linear forwards}
+  @keyframes closingBar{to{width:0}}
 
   .sets{padding:0 12px 12px;display:grid;gap:8px;grid-template-columns:1fr}
   .set{
-    display:grid;grid-template-columns:30px 1fr 1fr 34px;align-items:center;gap:7px;
+    display:grid;grid-template-columns:40px 1fr 1fr 34px;align-items:center;gap:7px;
     background:var(--bg-2);border:1px solid var(--line-soft);border-radius:12px;padding:6px 7px;transition:.16s
   }
   .set.on{background:var(--ok-tint);border-color:var(--ok-tint-line)}
-  .set .n{font-size:11px;font-weight:800;color:var(--txt-3);text-align:center;letter-spacing:.5px}
+  .set.timing{animation:setTiming 2.4s ease-in-out infinite}
+  @keyframes setTiming{
+    0%,100%{border-color:rgba(34,211,238,.35);box-shadow:none}
+    50%{border-color:rgba(34,211,238,.9);box-shadow:0 0 0 3px rgba(34,211,238,.14)}
+  }
+  .set .n{
+    height:42px;border-radius:9px;background:var(--card-2);border:1px solid var(--line);
+    display:grid;align-content:center;justify-items:center;gap:2px;padding:0;
+    font-size:11px;font-weight:800;color:var(--txt-3);letter-spacing:.4px;line-height:1
+  }
+  .set .n i{
+    font-style:normal;font-size:8.5px;font-weight:700;letter-spacing:0;color:var(--txt-2);
+    border-bottom:1px dotted var(--txt-3);padding-bottom:1px
+  }
+  .set .n i.add{opacity:.55}
   .set.on .n{color:var(--ok)}
+  .set.timing .n{color:var(--accent-2);border-color:rgba(34,211,238,.5)}
   .field{position:relative}
   .field input{
     width:100%;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--card);
@@ -362,14 +385,50 @@
   .timer{
     position:fixed;right:14px;bottom:calc(14px + var(--safe-b));z-index:50;
     display:none;align-items:center;gap:10px;padding:9px 10px 9px 14px;border-radius:99px;
-    background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--line);box-shadow:var(--shadow)
+    backdrop-filter:blur(12px);border:1px solid var(--line);box-shadow:var(--shadow);
+    /* espera (> 30 s) */
+    --p-bg:rgba(56,189,248,.20);   --p-bg2:rgba(56,189,248,.42);
+    --p-edge:rgba(34,211,238,.35); --p-edge2:rgba(34,211,238,.9);
+    --p-halo:rgba(34,211,238,.16);
+    --p-ring:rgba(255,255,255,.2); --p-ring2:rgba(255,255,255,.95); --p-ring-halo:rgba(255,255,255,.16)
   }
-  .timer.show{display:flex}
-  .timer .t{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.5px;min-width:56px;text-align:center}
-  .timer.warn .t{color:var(--warn)}
-  .timer button{width:32px;height:32px;border-radius:50%;background:var(--card-2);border:1px solid var(--line);
-    display:grid;place-items:center;font-size:11px;font-weight:800;color:var(--txt-2)}
-  .timer button:hover{color:var(--txt)}
+  :root[data-theme="light"] .timer{
+    --p-bg:rgba(2,132,199,.88); --p-bg2:#0284c7;
+    --p-edge:rgba(2,132,199,.9); --p-edge2:#0284c7
+  }
+  /* alarma (<= 30 s): mismo latido, solo cambia el color */
+  .timer.hot{
+    --p-bg:rgba(239,68,68,.22); --p-bg2:#ef4444;
+    --p-edge:rgba(239,68,68,.6); --p-edge2:#ef4444;
+    --p-halo:rgba(239,68,68,.3)
+  }
+  :root[data-theme="light"] .timer.hot{
+    --p-bg:rgba(220,38,38,.9); --p-bg2:#dc2626;
+    --p-edge:rgba(220,38,38,.9); --p-edge2:#dc2626
+  }
+  /* la animación vive en .show, así que cambiar de estado nunca reinicia el ciclo */
+  .timer.show{display:flex;animation:restPulse 2.4s ease-in-out infinite}
+  .timer .t{
+    font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.5px;
+    min-width:56px;text-align:center;color:#fff;
+    border:1px solid var(--p-ring);border-radius:10px;padding:1px 8px;
+    animation:restRing 2.4s ease-in-out infinite
+  }
+  .timer button{width:32px;height:32px;border-radius:50%;color:#fff;
+    background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.32);
+    display:grid;place-items:center;font-size:11px;font-weight:800}
+  @keyframes restPulse{
+    0%,100%{background:var(--p-bg);border-color:var(--p-edge);box-shadow:var(--shadow)}
+    50%{background:var(--p-bg2);border-color:var(--p-edge2);box-shadow:0 0 0 8px var(--p-halo),var(--shadow)}
+  }
+  @keyframes restRing{
+    0%,100%{border-color:var(--p-ring);box-shadow:none}
+    50%{border-color:var(--p-ring2);box-shadow:0 0 0 4px var(--p-ring-halo)}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .timer.show,.timer .t{animation:none}
+    .timer.show{background:var(--p-bg2);border-color:var(--p-edge2)}
+  }
 
   .toast{
     position:fixed;left:50%;transform:translateX(-50%) translateY(20px);
@@ -398,7 +457,7 @@
   .switch.on i{left:22px}
 
   /* ---------- CONFIRMACIÓN ---------- */
-  #modalBg{z-index:80}
+  #modalBg,#restBg{z-index:80}
   .modal{
     position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:81;
     width:min(360px,calc(100% - 32px));display:none;
@@ -408,7 +467,27 @@
   .modal.show{display:block}
   .modal h3{margin:0 0 6px;font-size:16.5px}
   .modal p{margin:0 0 18px;font-size:13.5px;color:var(--txt-2);line-height:1.5}
-  .modal-actions{display:flex;gap:8px;justify-content:flex-end}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+
+  /* editor de descanso por serie */
+  .modal p.who{margin:-2px 0 14px;font-size:12.5px;color:var(--txt-3)}
+  .rest-fields{display:flex;align-items:flex-start;justify-content:center;gap:10px;margin-bottom:14px}
+  .rest-fields label{display:block;text-align:center}
+  .rest-fields input{
+    width:84px;height:54px;text-align:center;font-size:23px;font-weight:800;font-variant-numeric:tabular-nums;
+    border-radius:12px;border:1px solid var(--line);background:var(--bg-2);outline:none;
+    -moz-appearance:textfield;appearance:textfield
+  }
+  .rest-fields input::-webkit-outer-spin-button,.rest-fields input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .rest-fields input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,92,255,.18)}
+  .rest-fields small{display:block;margin-top:4px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--txt-3)}
+  .rest-fields .sep{font-size:22px;font-weight:800;color:var(--txt-3);line-height:54px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:16px}
+  .chip{
+    height:30px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:var(--card-2);
+    font-size:12px;font-weight:700;color:var(--txt-2);font-variant-numeric:tabular-nums
+  }
+  .chip.sel{border-color:var(--accent);background:rgba(124,92,255,.14);color:var(--txt)}
 </style>
 </head>
 <body>
@@ -462,7 +541,7 @@
 <div class="sheet" id="sheet">
   <h3>Ajustes</h3>
   <div class="row">
-    <p>Temporizador automático<small>Inicia el descanso al completar una serie</small></p>
+    <p>Temporizador de descanso<small>Habilitado: se inicia al completar cada serie</small></p>
     <div class="switch" id="swTimer"><i></i></div>
   </div>
   <div class="row">
@@ -471,6 +550,10 @@
       <option value="45">45 s</option><option value="60">60 s</option>
       <option value="90">90 s</option><option value="120">2 min</option><option value="180">3 min</option>
     </select>
+  </div>
+  <div class="row">
+    <p>Aviso al terminar<small>Muestra un mensaje en pantalla al acabar el descanso</small></p>
+    <div class="switch" id="swAlert"><i></i></div>
   </div>
   <div class="row">
     <p>Datos<small>Todo se guarda en este dispositivo</small></p>
@@ -492,6 +575,30 @@
   <div class="modal-actions">
     <button class="btn" id="modalNo">Cancelar</button>
     <button class="btn solid-danger" id="modalYes">Eliminar</button>
+  </div>
+</div>
+
+<div class="sheet-bg" id="restBg"></div>
+<div class="modal" id="restModal" role="dialog" aria-modal="true" aria-labelledby="restTitle">
+  <h3 id="restTitle">Descanso</h3>
+  <p class="who" id="restWho"></p>
+  <div class="rest-fields">
+    <label><input id="restMin" type="text" inputmode="numeric" maxlength="2" aria-label="Minutos"><small>min</small></label>
+    <span class="sep">:</span>
+    <label><input id="restSec" type="text" inputmode="numeric" maxlength="2" aria-label="Segundos"><small>seg</small></label>
+  </div>
+  <div class="chips" id="restChips">
+    <button class="chip" data-sec="30">0:30</button>
+    <button class="chip" data-sec="45">0:45</button>
+    <button class="chip" data-sec="60">1:00</button>
+    <button class="chip" data-sec="90">1:30</button>
+    <button class="chip" data-sec="120">2:00</button>
+    <button class="chip" data-sec="180">3:00</button>
+  </div>
+  <div class="modal-actions">
+    <button class="btn danger" id="restClear">Quitar</button>
+    <button class="btn" id="restCancel">Cancelar</button>
+    <button class="btn primary" id="restSave">Guardar</button>
   </div>
 </div>
 
@@ -592,12 +699,12 @@ const TOTAL_WEEKS = 16;
    ESTADO / PERSISTENCIA
    ========================================================= */
 const KEY = 'train.gm.v1';
-const FALLBACK_CFG = { theme:'dark', autoTimer:true, restSeconds:60 };
+const FALLBACK_CFG = { theme:'dark', autoTimer:true, restSeconds:60, restEndPopup:true };
 let CONFIG = FALLBACK_CFG;
 const defaults = () => ({ start:isoMonday(new Date()), week:1, prefs:{}, log:{} });
 
 // prefs solo guarda lo que el usuario cambió a mano; el resto viene de config.json
-const CFG_OF = { theme:'theme', autoTimer:'autoTimer', rest:'restSeconds' };
+const CFG_OF = { theme:'theme', autoTimer:'autoTimer', rest:'restSeconds', endAlert:'restEndPopup' };
 function pref(k){
   return state.prefs[k] !== undefined ? state.prefs[k] : CONFIG[CFG_OF[k]];
 }
@@ -606,7 +713,7 @@ function setPref(k, v){ state.prefs[k] = v; save(1); }
 let state = defaults();
 let selDay = todayWeekday();
 const noteOpen = new Set();   // ejercicios con el editor de nota abierto
-const expandedEx = new Set(); // ejercicios completados que el usuario volvió a abrir
+const openEx = new Set();     // ejercicios completos que siguen desplegados
 const drafts = {};            // borradores de nota sin guardar
 
 // config.json define los valores por defecto; los ajustes guardados siempre ganan
@@ -620,6 +727,7 @@ async function loadConfig(){
       version: j.version ? String(j.version) : '',
       theme: j.theme === 'light' ? 'light' : 'dark',
       autoTimer: j.autoTimer !== false,
+      restEndPopup: j.restEndPopup !== false,
       restSeconds: [45,60,90,120,180].includes(rest) ? rest : FALLBACK_CFG.restSeconds
     };
   }catch(e){
@@ -675,7 +783,7 @@ function entry(x){
   }
   if(typeof e.n !== 'number') e.n = x.series;
   if(typeof e.notes !== 'string') e.notes = '';
-  while(e.sets.length < e.n) e.sets.push({ w:'', r:'', d:false });
+  while(e.sets.length < e.n) e.sets.push({ w:'', r:'', d:false, rest:0 });
   if(e.sets.length > e.n) e.sets.length = e.n;
   return e;
 }
@@ -823,6 +931,7 @@ function renderDay(){
   main.innerHTML = html;
   markClampedNotes();
   updatePin(day, p);
+  markTimingSet();
 }
 
 function markClampedNotes(){
@@ -851,24 +960,15 @@ function exCard(x){
   const editing = noteOpen.has(x.id);
   const draft = drafts[x.id] !== undefined ? drafts[x.id] : e.notes;
   const lv = Math.max(0, BORG.indexOf(e.borg || '') - 1);
-
-  if(allDone && !expandedEx.has(x.id)){
-    return `<article class="ex done collapsed" data-ex="${x.id}">
-      <button class="ex-sum" data-act="toggle-ex">
-        <span class="tick">✓</span>
-        <span class="nm">${esc(x.name)}</span>
-        ${e.notes.trim() ? '<span class="nt">📝</span>' : ''}
-        <span class="rs">${esc(doneSummary(e, x))}</span>
-        <span class="chev">›</span>
-      </button>
-    </article>`;
-  }
+  const collapsed = allDone && !openEx.has(x.id);
 
   const sets = e.sets.map((s, i) => {
     const ph = i > 0 ? (e.sets[i-1].w || '') : '';
     const phPrev = prev && prev.sets[i] ? prev.sets[i].w : '';
     return `<div class="set ${s.d?'on':''}" data-set="${i}">
-      <span class="n">S${i+1}</span>
+      <button class="n" data-act="rest" aria-label="Editar descanso de la serie ${i+1}">S${i+1}${
+        s.rest ? `<i>${fmtDur(s.rest)}</i>` : '<i class="add">--:--</i>'
+      }</button>
       <label class="field">
         <input type="text" inputmode="decimal" data-f="w" value="${esc(s.w)}"
           placeholder="${esc(ph || phPrev || '—')}" aria-label="Peso serie ${i+1}">
@@ -883,8 +983,9 @@ function exCard(x){
     </div>`;
   }).join('');
 
-  return `<article class="ex ${allDone?'done':''}" data-ex="${x.id}">
+  return `<article class="ex ${allDone?'done':''} ${collapsed?'collapsed':''}" data-ex="${x.id}">
     <div class="ex-top" ${allDone ? 'data-act="toggle-ex"' : ''}>
+      ${allDone ? '<span class="tick">✓</span>' : ''}
       <div class="ex-name">
         <h3>${esc(x.name)}</h3>
         <div class="exsub">
@@ -892,10 +993,12 @@ function exCard(x){
           ${x.tempo ? `· <span class="tempo">${esc(x.tempo)} seg</span>` : ''}
           · <span class="target">${esc(x.peso)}</span>
         </div>
+        ${allDone ? `<div class="exdone">${esc(doneSummary(e, x))}${e.notes.trim() ? ' · 📝' : ''}</div>` : ''}
       </div>
       ${allDone ? '<span class="chev">›</span>' : ''}
     </div>
 
+    <div class="fold"><div class="inner">
     <div class="sets">${sets}</div>
 
     <div class="ex-foot">
@@ -925,6 +1028,7 @@ function exCard(x){
       <button class="more" data-act="note-more">Ver más</button>
       <button class="edit" data-act="note-open" aria-label="Editar nota">✎</button>
     </div>` : ''}
+    </div></div>
   </article>`;
 }
 
@@ -964,7 +1068,7 @@ main.addEventListener('click', async ev => {
       const p = peek(state.week - 1, x.id); if(!p) return;
       const e = entry(x);
       e.n = p.sets.length;
-      e.sets = p.sets.map(s => ({ w:s.w||'', r:s.r||'', d:false }));
+      e.sets = p.sets.map(s => ({ w:s.w||'', r:s.r||'', d:false, rest:0 }));
       e.borg = p.borg || ''; n++;
     }));
     save(); refresh(); toast(n ? `Copiados ${n} ejercicios` : 'Sin datos previos');
@@ -982,20 +1086,27 @@ main.addEventListener('click', async ev => {
     if(e.sets[i].d){
       if(!e.sets[i].w && i > 0) e.sets[i].w = e.sets[i-1].w;
       if(!e.sets[i].r) e.sets[i].r = /^\d+$/.test(x.reps) ? x.reps : '';
-      if(pref('autoTimer')) startTimer(pref('rest'));
+      if(pref('autoTimer')) startTimer(pref('rest'), { exId:x.id, i, week:state.week });
+      if(e.sets.every(s => s.d)) openEx.add(x.id);   // se pliega después, no al instante
     } else {
-      expandedEx.delete(x.id);
+      openEx.delete(x.id);
     }
     save(1); refresh();
   }
   else if(act === 'toggle-ex'){
-    if(expandedEx.has(x.id)) expandedEx.delete(x.id); else expandedEx.add(x.id);
-    refresh();
+    const willCollapse = !card.classList.contains('collapsed');
+    if(willCollapse) openEx.delete(x.id); else openEx.add(x.id);
+    card.querySelectorAll('.closing').forEach(n => n.remove());
+    card.classList.toggle('collapsed', willCollapse);
+    if(!willCollapse) markClampedNotes();
+  }
+  else if(act === 'rest'){
+    openRestEdit(x, +btn.closest('.set').dataset.set);
   }
   else if(act === 'add-set'){
     const last = e.sets[e.sets.length - 1];
     e.n = e.sets.length + 1;
-    e.sets.push({ w: last ? last.w : '', r:'', d:false });
+    e.sets.push({ w: last ? last.w : '', r:'', d:false, rest:0 });
     save(1); refresh(); toast('Serie S' + e.sets.length + ' añadida');
   }
   else if(act === 'rm-set'){
@@ -1064,25 +1175,164 @@ function findEx(id){
    TEMPORIZADOR DE DESCANSO
    ========================================================= */
 const tEl = document.getElementById('timer'), tTxt = document.getElementById('timerTxt');
-let tLeft = 0, tInt = null;
+const HOT_AT = 30;
+let tLeft = 0, tInt = null, tStartAt = 0;
+let timerSet = null;   // serie que arrancó el descanso en curso
 
-function startTimer(sec){
-  tLeft = sec; tEl.classList.add('show'); tEl.classList.remove('warn');
+function fmtDur(sec){
+  return Math.floor(sec/60) + ':' + String(sec % 60).padStart(2,'0');
+}
+function startTimer(sec, target){
+  tLeft = sec; tStartAt = Date.now(); timerSet = target || null;
+  tEl.classList.add('show');
   clearInterval(tInt);
-  paint();
+  paint(); markTimingSet();
   tInt = setInterval(() => {
     tLeft--; paint();
-    if(tLeft <= 10) tEl.classList.add('warn');
-    if(tLeft <= 0){ stopTimer(); beep(); toast('Descanso terminado'); }
+    if(tLeft <= 0){ const el = Math.round((Date.now() - tStartAt)/1000); stopTimer(true); beep(); restEnded(el); }
   }, 1000);
 }
 function paint(){
   const m = Math.floor(tLeft/60), s = tLeft % 60;
   tTxt.textContent = m + ':' + String(s).padStart(2,'0');
+  tEl.classList.toggle('hot', tLeft <= HOT_AT);
 }
-function stopTimer(){ clearInterval(tInt); tInt = null; tEl.classList.remove('show'); }
-document.getElementById('timerStop').onclick = stopTimer;
-document.getElementById('timerAdd').onclick = () => { tLeft += 30; paint(); tEl.classList.remove('warn'); };
+function stopTimer(keepTarget){
+  clearInterval(tInt); tInt = null;
+  tEl.classList.remove('show','hot');
+  if(!keepTarget){ timerSet = null; markTimingSet(); }
+}
+// resalta en la tarjeta la serie a la que pertenece el descanso activo
+function markTimingSet(){
+  main.querySelectorAll('.set.timing').forEach(el => el.classList.remove('timing'));
+  if(!timerSet || timerSet.week !== state.week) return;
+  const el = main.querySelector(`.ex[data-ex="${timerSet.exId}"] .set[data-set="${timerSet.i}"]`);
+  if(el){ el.classList.add('timing'); syncPulse(el); }
+}
+// el latido de la serie nace en cada re-render, así que hay que ponerlo en fase con la píldora
+function syncPulse(el){
+  const anim = n => (n.getAnimations ? n.getAnimations() : []).find(a => a.animationName);
+  const a = anim(tEl), b = anim(el);
+  if(a && b) b.currentTime = a.currentTime;
+  else el.style.animationDelay = -(((Date.now() - tStartAt) / 1000) % 2.4) + 's';
+}
+function restEnded(elapsed, ended = true){
+  const target = timerSet;
+  if(modal.classList.contains('show') || (ended && !pref('endAlert'))){
+    toast((ended ? 'Descanso terminado · ' : 'Descanso detenido · ') + fmtDur(elapsed));
+    timerSet = null; markTimingSet(); maybeScheduleCollapse(target);
+    return;
+  }
+  const title = ended ? '⏰ Descanso terminado' : '⏹ Descanso detenido';
+  if(!target){
+    askConfirm({ title, text:`Descansaste ${fmtDur(elapsed)}. Arranca la siguiente serie.`,
+      ok:'Voy a la siguiente serie', okClass:'primary', cancel:false });
+    return;
+  }
+
+  const ex = findEx(target.exId);
+  const since = Date.now();
+  const total = () => elapsed + Math.floor((Date.now() - since)/1000);
+  const label = () => 'Registrar descanso de ' + fmtDur(total());
+
+  const p = askConfirm({
+    title,
+    text:`Serie S${target.i+1} de ${ex.name}: ${ended ? 'descansaste' : 'llevas'} ${fmtDur(elapsed)} y el contador sigue corriendo. `
+       + 'Al registrar se guarda el total, no solo lo del temporizador.',
+    ok: label(), okClass:'primary', cancel:true, cancelText:'Cerrar'
+  });
+  extraInt = setInterval(() => { document.getElementById('modalYes').textContent = label(); }, 1000);
+
+  p.then(yes => {
+    const t = total();
+    clearInterval(extraInt); extraInt = null;
+    if(yes) saveSetRest(target, t);
+    timerSet = null; markTimingSet(); maybeScheduleCollapse(target);
+  });
+}
+function saveSetRest(target, seconds){
+  const e = (state.log['w' + target.week] || {})[target.exId];
+  if(!e || !e.sets[target.i]) return;
+  e.sets[target.i].rest = seconds;
+  save(); refresh();
+  toast(seconds ? `S${target.i+1}: descanso de ${fmtDur(seconds)}` : `S${target.i+1}: descanso quitado`);
+}
+
+/* ---- plegado diferido del ejercicio terminado ---- */
+let closeT = null;
+function maybeScheduleCollapse(target){
+  if(!target || !pref('autoTimer') || target.week !== state.week) return;
+  const e = (state.log['w' + target.week] || {})[target.exId];
+  if(e && e.sets.every(s => s.d)) scheduleCollapse(target.exId);
+}
+function scheduleCollapse(exId){
+  const card = main.querySelector(`.ex[data-ex="${exId}"]`);
+  if(!card || card.classList.contains('collapsed')) return;
+  card.querySelectorAll('.closing').forEach(n => n.remove());
+  const bar = document.createElement('span');
+  bar.className = 'closing';
+  bar.innerHTML = '<i></i>';
+  card.appendChild(bar);
+  clearTimeout(closeT);
+  closeT = setTimeout(() => {
+    bar.remove();
+    openEx.delete(exId);
+    const live = main.querySelector(`.ex[data-ex="${exId}"]`);
+    if(live) live.classList.add('collapsed');
+  }, 3000);
+}
+
+/* ---- editor manual de descanso ---- */
+const restModal = document.getElementById('restModal'), restBg = document.getElementById('restBg');
+const restMin = document.getElementById('restMin'), restSec = document.getElementById('restSec');
+let restTarget = null;
+
+function openRestEdit(x, i){
+  const e = entry(x);
+  restTarget = { exId:x.id, i, week:state.week };
+  document.getElementById('restTitle').textContent = `Descanso · S${i+1}`;
+  document.getElementById('restWho').textContent = x.name;
+  fillRestFields(e.sets[i].rest || 0);
+  restModal.classList.add('show'); restBg.classList.add('show');
+}
+function closeRestEdit(){
+  restModal.classList.remove('show'); restBg.classList.remove('show');
+  restTarget = null;
+}
+function fillRestFields(sec){
+  restMin.value = Math.floor(sec/60);
+  restSec.value = String(sec % 60).padStart(2,'0');
+  markRestChip(sec);
+}
+function readRestFields(){
+  const clamp = v => Math.max(0, Math.min(59, parseInt(v, 10) || 0));
+  return clamp(restMin.value) * 60 + clamp(restSec.value);
+}
+function markRestChip(sec){
+  document.querySelectorAll('#restChips .chip').forEach(c => c.classList.toggle('sel', +c.dataset.sec === sec));
+}
+document.getElementById('restChips').onclick = ev => {
+  const c = ev.target.closest('.chip'); if(!c) return;
+  fillRestFields(+c.dataset.sec);
+};
+[restMin, restSec].forEach(el => el.addEventListener('input', () => markRestChip(readRestFields())));
+document.getElementById('restSave').onclick = () => {
+  const t = restTarget; const sec = readRestFields();
+  closeRestEdit(); if(t) saveSetRest(t, sec);
+};
+document.getElementById('restClear').onclick = () => {
+  const t = restTarget;
+  closeRestEdit(); if(t) saveSetRest(t, 0);
+};
+document.getElementById('restCancel').onclick = closeRestEdit;
+restBg.onclick = closeRestEdit;
+
+document.getElementById('timerStop').onclick = () => {
+  const elapsed = Math.round((Date.now() - tStartAt)/1000);
+  stopTimer(true);
+  restEnded(elapsed, false);
+};
+document.getElementById('timerAdd').onclick = () => { tLeft += 30; paint(); };
 
 let actx;
 function beep(){
@@ -1106,9 +1356,11 @@ function beep(){
    ========================================================= */
 const sheet = document.getElementById('sheet'), sheetBg = document.getElementById('sheetBg');
 const swTimer = document.getElementById('swTimer'), restSel = document.getElementById('restSel');
+const swAlert = document.getElementById('swAlert');
 
 function openSheet(){
   swTimer.classList.toggle('on', !!pref('autoTimer'));
+  swAlert.classList.toggle('on', !!pref('endAlert'));
   restSel.value = String(pref('rest'));
   sheet.classList.add('show'); sheetBg.classList.add('show');
 }
@@ -1117,6 +1369,7 @@ document.getElementById('btnSettings').onclick = openSheet;
 document.getElementById('sheetClose').onclick = closeSheet;
 sheetBg.onclick = closeSheet;
 swTimer.onclick = () => { const v = !pref('autoTimer'); setPref('autoTimer', v); swTimer.classList.toggle('on', v); };
+swAlert.onclick = () => { const v = !pref('endAlert'); setPref('endAlert', v); swAlert.classList.toggle('on', v); };
 restSel.onchange = () => setPref('rest', +restSel.value);
 
 document.getElementById('btnExport').onclick = () => {
@@ -1141,16 +1394,22 @@ document.getElementById('btnWipe').onclick = async () => {
 
 /* ---- confirmación ---- */
 const modal = document.getElementById('modal'), modalBg = document.getElementById('modalBg');
-let resolveConfirm = null;
+let resolveConfirm = null, extraInt = null;
 
-function askConfirm({ title, text, ok = 'Eliminar' }){
+function askConfirm({ title, text, ok = 'Eliminar', okClass = 'solid-danger', cancel = true, cancelText = 'Cancelar' }){
   document.getElementById('modalTitle').textContent = title;
   document.getElementById('modalText').textContent = text;
-  document.getElementById('modalYes').textContent = ok;
+  const yes = document.getElementById('modalYes');
+  yes.textContent = ok;
+  yes.className = 'btn ' + okClass;
+  const no = document.getElementById('modalNo');
+  no.textContent = cancelText;
+  no.style.display = cancel ? '' : 'none';
   modal.classList.add('show'); modalBg.classList.add('show');
   return new Promise(res => { resolveConfirm = res; });
 }
 function endConfirm(v){
+  clearInterval(extraInt); extraInt = null;
   modal.classList.remove('show'); modalBg.classList.remove('show');
   if(resolveConfirm){ resolveConfirm(v); resolveConfirm = null; }
 }
@@ -1158,7 +1417,10 @@ document.getElementById('modalYes').onclick = () => endConfirm(true);
 document.getElementById('modalNo').onclick = () => endConfirm(false);
 modalBg.onclick = () => endConfirm(false);
 document.addEventListener('keydown', ev => {
-  if(ev.key === 'Escape'){ if(resolveConfirm) endConfirm(false); else closeSheet(); }
+  if(ev.key !== 'Escape') return;
+  if(resolveConfirm) endConfirm(false);
+  else if(restTarget) closeRestEdit();
+  else closeSheet();
 });
 
 /* ---- tema claro / oscuro ---- */
