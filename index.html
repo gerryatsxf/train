@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -21,20 +21,57 @@
     --teal:#0fb9a5;
     --purple:#8b5cf6;
     --ok:#22c55e;
+    --ok-fill:#22c55e;
+    --ok-ink:#ffffff;
+    --ok-edge:#22c55e;
+    --ok-tint:rgba(34,197,94,.09);
+    --ok-tint-line:rgba(34,197,94,.34);
     --warn:#f59e0b;
     --hot:#ef4444;
     --radius:16px;
     --radius-sm:10px;
     --shadow:0 10px 30px rgba(0,0,0,.35);
     --safe-b:env(safe-area-inset-bottom,0px);
+    --glass:rgba(21,29,43,.94);
+    --scrim:rgba(3,6,12,.7);
+    --hover-line:#33415c;
+    --track:rgba(255,255,255,.08);
+    --glow-1:rgba(124,92,255,.18);
+    --glow-2:rgba(34,211,238,.10);
+    --head-h:112px;
+  }
+
+  :root[data-theme="light"]{
+    --bg:#f2f5fb;
+    --bg-2:#f5f8fd;
+    --card:#ffffff;
+    --card-2:#eef3fa;
+    --line:#dde4f0;
+    --line-soft:#e9eef7;
+    --txt:#111827;
+    --txt-2:#4b5a72;
+    --txt-3:#7d8ba3;
+    --ok:#16a34a;
+    --ok-fill:#dcfce7;
+    --ok-ink:#15803d;
+    --ok-edge:#86efac;
+    --ok-tint:rgba(22,163,74,.06);
+    --ok-tint-line:rgba(22,163,74,.24);
+    --shadow:0 10px 26px rgba(24,39,75,.08);
+    --glass:rgba(255,255,255,.95);
+    --scrim:rgba(15,23,42,.35);
+    --hover-line:#b9c6dd;
+    --track:rgba(15,23,42,.08);
+    --glow-1:rgba(124,92,255,.12);
+    --glow-2:rgba(34,211,238,.10);
   }
 
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0}
   body{
     background:
-      radial-gradient(1200px 600px at 80% -10%, rgba(124,92,255,.18), transparent 60%),
-      radial-gradient(900px 500px at 0% 0%, rgba(34,211,238,.10), transparent 55%),
+      radial-gradient(1200px 600px at 80% -10%, var(--glow-1), transparent 60%),
+      radial-gradient(900px 500px at 0% 0%, var(--glow-2), transparent 55%),
       var(--bg);
     color:var(--txt);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
@@ -42,106 +79,121 @@
     min-height:100vh;
     padding-bottom:calc(90px + var(--safe-b));
     -webkit-font-smoothing:antialiased;
+    transition:background-color .2s ease,color .2s ease;
   }
   button,input,select,textarea{font:inherit;color:inherit}
   button{cursor:pointer;border:0;background:none}
 
-  .wrap{max-width:1180px;margin:0 auto;padding:0 14px}
+  .wrap{width:100%;padding:0 12px}
 
   /* ---------- HEADER ---------- */
   header{
     position:sticky;top:0;z-index:30;
-    background:rgba(11,15,22,.82);
+    background:var(--glass);
     backdrop-filter:saturate(160%) blur(14px);
     -webkit-backdrop-filter:saturate(160%) blur(14px);
     border-bottom:1px solid var(--line-soft);
+    transition:transform .25s ease;
+    will-change:transform
   }
-  .top{display:flex;align-items:center;gap:12px;padding:12px 0 10px}
-  .brand{display:flex;align-items:center;gap:10px;min-width:0}
+  header.hide{transform:translateY(-101%)}
+
+  /* barra compacta fija del día */
+  .pinbar{
+    position:fixed;top:0;left:0;right:0;z-index:25;
+    background:var(--card);
+    border-bottom:1px solid var(--line);box-shadow:var(--shadow);
+    transform:translateY(-110%);transition:transform .24s ease;will-change:transform
+  }
+  .pinbar.show{transform:translateY(0)}
+  body:not(.nav-hidden) .pinbar.show{transform:translateY(var(--head-h))}
+  .pinbar .wrap{display:flex;align-items:center;gap:10px;height:42px}
+  .pinbar .ttl{flex:1;min-width:0;font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pinbar .ser{font-size:12px;font-weight:700;color:var(--txt-2);font-variant-numeric:tabular-nums}
+  .pinbar .pct{font-size:12px;font-weight:800;color:var(--ok);font-variant-numeric:tabular-nums;min-width:36px;text-align:right}
+  .pinbar .prog{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--track)}
+  .pinbar .prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent-2),var(--ok));transition:width .3s}
+  .top{display:flex;align-items:center;gap:8px;padding:8px 0;min-width:0}
+  .brand{display:flex;align-items:center;gap:9px;min-width:0;flex:none}
   .logo{
-    width:38px;height:38px;border-radius:12px;flex:none;
+    width:34px;height:34px;border-radius:10px;flex:none;
     background:linear-gradient(140deg,var(--purple),var(--accent-2));
-    display:grid;place-items:center;font-size:19px;box-shadow:var(--shadow)
+    display:grid;place-items:center;font-size:16px
   }
-  .brand h1{margin:0;font-size:15px;font-weight:700;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .brand p{margin:0;font-size:11.5px;color:var(--txt-3);text-transform:uppercase;letter-spacing:1.2px}
-  .top-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .top-actions{margin-left:auto;display:flex;gap:6px;align-items:center;flex:none}
 
   .icon-btn{
-    width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+    width:34px;height:34px;border-radius:9px;display:grid;place-items:center;
     background:var(--card);border:1px solid var(--line);color:var(--txt-2);
-    transition:.15s ease;font-size:16px
+    transition:.15s ease;font-size:14px;flex:none
   }
-  .icon-btn:hover{color:var(--txt);border-color:#33415c;transform:translateY(-1px)}
-  .icon-btn.on{color:#fff;background:linear-gradient(140deg,var(--purple),var(--accent));border-color:transparent}
+  .icon-btn:hover{color:var(--txt);border-color:var(--hover-line)}
 
   /* week nav */
-  .weeknav{display:flex;align-items:center;gap:8px;padding-bottom:10px}
+  .weeknav{display:flex;align-items:center;gap:6px;flex:1;min-width:0}
   .weeknav .arrow{
-    width:36px;height:36px;border-radius:10px;background:var(--card);border:1px solid var(--line);
-    display:grid;place-items:center;color:var(--txt-2);transition:.15s
+    width:30px;height:34px;border-radius:9px;background:var(--card);border:1px solid var(--line);
+    display:grid;place-items:center;color:var(--txt-2);transition:.15s;flex:none
   }
   .weeknav .arrow:hover:not(:disabled){color:var(--txt);background:var(--card-2)}
   .weeknav .arrow:disabled{opacity:.3;cursor:not-allowed}
   .week-pill{
-    flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:10px;
-    height:36px;border-radius:10px;border:1px solid var(--line);
-    background:linear-gradient(180deg,var(--card),var(--bg-2));
-    font-weight:700;font-size:13.5px;letter-spacing:.3px;padding:0 10px
+    flex:1;min-width:0;overflow:hidden;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    height:34px;border-radius:9px;border:1px solid var(--line);
+    background:var(--card);padding:0 6px;line-height:1.15
   }
-  .week-pill .dates{font-weight:500;color:var(--txt-3);font-size:12px;white-space:nowrap}
+  .week-pill span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .week-pill #weekLabel{font-weight:700;font-size:12.5px;letter-spacing:.2px}
+  .week-pill .dates{font-size:9.5px;font-weight:600;color:var(--txt-3);letter-spacing:.2px}
 
   /* day tabs */
-  .days{display:flex;gap:8px;overflow-x:auto;padding:0 0 12px;scrollbar-width:none;scroll-snap-type:x proximity}
+  .days{display:flex;gap:6px;overflow-x:auto;padding:0 0 8px;scrollbar-width:none;scroll-snap-type:x proximity}
   .days::-webkit-scrollbar{display:none}
   .day{
     flex:none;scroll-snap-align:center;position:relative;
-    min-width:82px;padding:9px 12px;border-radius:13px;
+    min-width:76px;padding:5px 10px 9px;border-radius:11px;
     background:var(--card);border:1px solid var(--line);
-    display:flex;flex-direction:column;gap:1px;align-items:flex-start;
+    display:flex;flex-direction:column;align-items:flex-start;
     transition:.16s ease
   }
-  .day b{font-size:13px;font-weight:700;letter-spacing:.2px}
-  .day small{font-size:10.5px;color:var(--txt-3);text-transform:uppercase;letter-spacing:.6px;white-space:nowrap}
-  .day:hover{border-color:#37456200;background:var(--card-2)}
+  .day b{font-size:12.5px;font-weight:700;letter-spacing:.2px;line-height:1.35}
+  .day small{font-size:9.5px;color:var(--txt-3);text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;line-height:1.3}
+  .day:hover{background:var(--card-2)}
   .day.sel{background:linear-gradient(150deg,rgba(124,92,255,.28),rgba(34,211,238,.16));border-color:rgba(139,92,246,.6)}
   .day.sel small{color:var(--txt-2)}
   .day.rest{opacity:.62}
-  .day .dot{position:absolute;top:8px;right:9px;width:7px;height:7px;border-radius:50%}
+  .day .dot{position:absolute;top:7px;right:8px;width:6px;height:6px;border-radius:50%}
   .day .dot.today{background:var(--accent-2);box-shadow:0 0 0 3px rgba(34,211,238,.18)}
-  .day .dot.done{background:var(--ok);box-shadow:0 0 0 3px rgba(34,197,94,.18)}
-  .day .bar{position:absolute;left:10px;right:10px;bottom:6px;height:3px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden}
+  .day .dot.done{background:var(--ok);box-shadow:0 0 0 3px var(--ok-tint)}
+  .day .bar{position:absolute;left:9px;right:9px;bottom:4px;height:3px;border-radius:3px;background:var(--track);overflow:hidden}
   .day .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-2),var(--ok));border-radius:3px;transition:width .3s}
 
   /* ---------- DAY HEADER ---------- */
   .day-head{
-    margin:16px 0 14px;padding:16px;border-radius:var(--radius);
-    background:linear-gradient(150deg,var(--card),var(--bg-2));
-    border:1px solid var(--line);box-shadow:var(--shadow);
-    display:flex;gap:16px;align-items:center;flex-wrap:wrap
+    position:relative;overflow:hidden;
+    margin:10px 0 12px;padding:10px 12px 10px 15px;border-radius:14px;
+    background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);
+    display:flex;gap:12px;align-items:center
   }
-  .day-head .t{flex:1;min-width:180px}
-  .day-head h2{margin:0;font-size:20px;letter-spacing:-.3px}
-  .day-head .sub{color:var(--txt-3);font-size:12.5px;margin-top:3px;text-transform:uppercase;letter-spacing:1px}
-  .tag{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
-    padding:4px 9px;border-radius:99px;border:1px solid transparent}
-  .tag.inf{background:rgba(15,185,165,.14);color:#5eead4;border-color:rgba(15,185,165,.3)}
-  .tag.sup{background:rgba(139,92,246,.16);color:#c4b5fd;border-color:rgba(139,92,246,.32)}
+  .day-head::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
+  .day-head.inf::before{background:var(--teal)}
+  .day-head.sup::before{background:var(--purple)}
+  .day-head .t{flex:1;min-width:0}
+  .day-head h2{margin:0;font-size:15.5px;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .day-head .sub{color:var(--txt-3);font-size:11.5px;margin-top:2px;font-variant-numeric:tabular-nums;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-  .stats{display:flex;gap:10px;flex-wrap:wrap}
-  .stat{background:var(--card-2);border:1px solid var(--line);border-radius:12px;padding:8px 13px;min-width:96px}
-  .stat b{display:block;font-size:18px;line-height:1.2;font-variant-numeric:tabular-nums}
-  .stat span{font-size:10.5px;color:var(--txt-3);text-transform:uppercase;letter-spacing:.8px}
-
-  .ring{width:58px;height:58px;flex:none;position:relative}
-  .ring svg{transform:rotate(-90deg)}
-  .ring .val{position:absolute;inset:0;display:grid;place-items:center;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
+  .ring{width:46px;height:46px;flex:none;position:relative}
+  .ring svg{display:block;width:100%;height:100%;transform:rotate(-90deg)}
+  .ring .val{position:absolute;inset:0;display:grid;place-items:center;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums}
 
   /* ---------- BLOCKS ---------- */
   .block{margin-bottom:16px}
   .block-label{
     display:flex;align-items:center;gap:9px;margin:0 0 8px 2px;
-    font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:1.3px;color:var(--txt-3)
+    font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:1.3px;color:var(--txt-3);
+    white-space:nowrap;overflow:hidden
   }
   .block-label i{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:none}
   .block-label.bis i{background:var(--accent-2)}
@@ -154,52 +206,77 @@
     background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
     overflow:hidden;transition:border-color .2s,box-shadow .2s
   }
-  .ex.done{border-color:rgba(34,197,94,.42);box-shadow:0 0 0 1px rgba(34,197,94,.12) inset}
-  .ex-top{display:flex;gap:12px;align-items:flex-start;padding:13px 14px}
+  .ex.done{border-color:var(--ok-tint-line)}
+  .ex-top{display:flex;gap:10px;align-items:center;padding:11px 12px 7px}
   .ex-name{flex:1;min-width:0}
-  .ex-name h3{margin:0;font-size:15.5px;font-weight:700;letter-spacing:-.2px}
-  .metas{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
-  .m{font-size:11.5px;color:var(--txt-2);background:var(--card-2);border:1px solid var(--line-soft);
-     padding:3px 8px;border-radius:8px;white-space:nowrap;font-variant-numeric:tabular-nums}
-  .m b{color:var(--txt);font-weight:700}
-  .m.tempo{color:#fbbf24;border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.09)}
-  .m.target{color:#7dd3fc;border-color:rgba(56,189,248,.25);background:rgba(56,189,248,.09)}
-  .m.borg{color:#c4b5fd;border-color:rgba(139,92,246,.28);background:rgba(139,92,246,.1)}
-  .m.adj{color:#94a3b8}
-
-  .check{
-    width:34px;height:34px;flex:none;border-radius:50%;border:2px solid var(--line);
-    display:grid;place-items:center;color:var(--txt-3);font-size:15px;transition:.16s;background:var(--card-2)
+  .ex-name h3{margin:0;font-size:15px;font-weight:700;letter-spacing:-.2px;line-height:1.3}
+  .exsub{
+    margin-top:2px;font-size:12px;color:var(--txt-3);font-variant-numeric:tabular-nums;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis
   }
-  .check:hover{border-color:var(--ok);color:var(--ok)}
-  .check.on{background:var(--ok);border-color:var(--ok);color:#04240f}
+  .exsub b{color:var(--txt-2);font-weight:700}
+  .exsub .tempo{color:#b45309}
+  .exsub .target{color:#0369a1;font-weight:600}
+  :root[data-theme="dark"] .exsub .tempo{color:#fbbf24}
+  :root[data-theme="dark"] .exsub .target{color:#7dd3fc}
+  .chev{color:var(--txt-3);font-size:17px;flex:none;line-height:1;transform:rotate(90deg);transition:transform .18s}
+  .ex-top .chev{transform:rotate(-90deg)}
 
-  .sets{padding:0 14px 12px;display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  /* ejercicio completado y colapsado */
+  .ex-top[data-act]{cursor:pointer}
+  .ex-sum{width:100%;display:flex;align-items:center;gap:9px;padding:11px 12px;text-align:left}
+  .ex-sum .tick{
+    width:21px;height:21px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:11px;
+    background:var(--ok-fill);color:var(--ok-ink);border:1px solid var(--ok-edge)
+  }
+  .ex-sum .nm{flex:1;min-width:0;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ex-sum .nt{font-size:11px;flex:none;opacity:.75}
+  .ex-sum .rs{font-size:12px;color:var(--txt-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+  .sets{padding:0 12px 12px;display:grid;gap:8px;grid-template-columns:1fr}
   .set{
     display:grid;grid-template-columns:30px 1fr 1fr 34px;align-items:center;gap:7px;
     background:var(--bg-2);border:1px solid var(--line-soft);border-radius:12px;padding:6px 7px;transition:.16s
   }
-  .set.on{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.32)}
+  .set.on{background:var(--ok-tint);border-color:var(--ok-tint-line)}
   .set .n{font-size:11px;font-weight:800;color:var(--txt-3);text-align:center;letter-spacing:.5px}
   .set.on .n{color:var(--ok)}
   .field{position:relative}
   .field input{
-    width:100%;height:38px;border-radius:9px;border:1px solid var(--line);background:var(--card);
-    padding:0 30px 0 9px;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;outline:none;transition:.15s;
-    -moz-appearance:textfield
+    width:100%;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--card);
+    padding:0 32px 0 10px;font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;outline:none;transition:.15s;
+    -moz-appearance:textfield;appearance:textfield
   }
   .field input::-webkit-outer-spin-button,.field input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
   .field input::placeholder{color:var(--txt-3);font-weight:500;opacity:.65}
   .field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,92,255,.18);background:var(--bg)}
   .field u{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10.5px;color:var(--txt-3);text-decoration:none;pointer-events:none;letter-spacing:.3px}
   .set .mini{
-    width:30px;height:30px;border-radius:8px;border:1.5px solid var(--line);display:grid;place-items:center;
-    color:var(--txt-3);font-size:12px;transition:.15s;background:transparent
+    width:34px;height:42px;border-radius:10px;border:1.5px solid var(--line);display:grid;place-items:center;
+    color:var(--txt-3);font-size:14px;transition:.15s;background:transparent
   }
   .set .mini:hover{border-color:var(--ok);color:var(--ok)}
-  .set .mini.on{background:var(--ok);border-color:var(--ok);color:#04240f}
+  .set .mini.on{background:var(--ok-fill);border-color:var(--ok-edge);color:var(--ok-ink)}
 
-  .ex-foot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:0 14px 13px}
+  .stepper{
+    display:inline-flex;align-items:stretch;height:34px;border-radius:9px;
+    background:var(--card-2);border:1px solid var(--line);overflow:hidden;flex:none
+  }
+  .stepper button{
+    width:32px;display:grid;place-items:center;font-size:17px;font-weight:500;
+    color:var(--txt-2);line-height:1;transition:background .12s,color .12s
+  }
+  .stepper button:hover:not(:disabled){background:var(--line-soft);color:var(--txt)}
+  .stepper button:active:not(:disabled){background:var(--line)}
+  .stepper button:disabled{opacity:.28;cursor:not-allowed}
+  .stepper .v{
+    display:grid;place-items:center;min-width:34px;padding:0 5px;
+    border-left:1px solid var(--line);border-right:1px solid var(--line);
+    font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums
+  }
+  .stepper .v small{display:block;font-size:8.5px;font-weight:700;letter-spacing:.6px;color:var(--txt-3);text-transform:uppercase;margin-top:-2px}
+
+  .ex-foot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:0 12px 12px}
   .sel-borg{
     height:34px;border-radius:9px;background:var(--bg-2);border:1px solid var(--line);padding:0 26px 0 10px;
     font-size:12.5px;font-weight:700;outline:none;appearance:none;cursor:pointer;
@@ -207,19 +284,43 @@
     background-repeat:no-repeat;background-position:right 9px center
   }
   .sel-borg:focus{border-color:var(--accent)}
-  .sel-borg[data-lv="1"]{color:#86efac} .sel-borg[data-lv="2"]{color:#7dd3fc}
-  .sel-borg[data-lv="3"]{color:#fbbf24} .sel-borg[data-lv="4"]{color:#fca5a5}
+  .sel-borg[data-lv="1"]{color:#16a34a} .sel-borg[data-lv="2"]{color:#0284c7}
+  .sel-borg[data-lv="3"]{color:#d97706} .sel-borg[data-lv="4"]{color:#dc2626}
+  :root[data-theme="dark"] .sel-borg[data-lv="1"]{color:#86efac}
+  :root[data-theme="dark"] .sel-borg[data-lv="2"]{color:#7dd3fc}
+  :root[data-theme="dark"] .sel-borg[data-lv="3"]{color:#fbbf24}
+  :root[data-theme="dark"] .sel-borg[data-lv="4"]{color:#fca5a5}
   .note-btn{height:34px;padding:0 12px;border-radius:9px;background:var(--bg-2);border:1px solid var(--line);
     font-size:12.5px;color:var(--txt-2);display:inline-flex;align-items:center;gap:6px;transition:.15s}
-  .note-btn:hover{color:var(--txt);border-color:#33415c}
-  .note-btn.has{color:#fbbf24;border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.08)}
-  .note-wrap{padding:0 14px 13px;display:none}
-  .note-wrap.open{display:block}
-  .note-wrap textarea{
-    width:100%;min-height:62px;resize:vertical;border-radius:11px;border:1px solid var(--line);
+  .note-btn:hover{color:var(--txt);border-color:var(--hover-line)}
+
+  /* nota en modo lectura */
+  .note-view{
+    margin:0 12px 12px;padding:8px 10px;border-radius:11px;
+    background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.24);
+    display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.45;color:var(--txt-2)
+  }
+  .note-view .ico{flex:none;font-size:12px;line-height:1.5}
+  .note-view .txt{
+    flex:1;min-width:0;white-space:pre-wrap;word-break:break-word;
+    display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer
+  }
+  .note-view.expanded .txt{-webkit-line-clamp:99;line-clamp:99}
+  .note-view .more{display:none;flex:none;font-size:11.5px;font-weight:700;color:#b45309;padding:0 2px}
+  :root[data-theme="dark"] .note-view .more{color:#fbbf24}
+  .note-view.clamped .more{display:inline-block}
+  .note-view .edit{flex:none;width:26px;height:26px;border-radius:7px;border:1px solid var(--line);
+    display:grid;place-items:center;font-size:11px;color:var(--txt-3);background:var(--bg-2);transition:.15s}
+  .note-view .edit:hover{color:var(--txt);border-color:var(--hover-line)}
+
+  /* nota en modo edición */
+  .note-edit{padding:0 12px 12px}
+  .note-edit textarea{
+    width:100%;min-height:76px;resize:vertical;border-radius:11px;border:1px solid var(--line);
     background:var(--bg-2);padding:10px 12px;font-size:13.5px;outline:none;line-height:1.5
   }
-  .note-wrap textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,92,255,.15)}
+  .note-edit textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,92,255,.15)}
+  .note-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
 
   /* ---------- REST DAY ---------- */
   .rest-card{
@@ -241,15 +342,17 @@
     background:var(--card-2);border:1px solid var(--line);color:var(--txt-2);transition:.15s;
     display:inline-flex;align-items:center;gap:7px
   }
-  .btn:hover{color:var(--txt);border-color:#3a4a68}
+  .btn:hover{color:var(--txt);border-color:var(--hover-line)}
   .btn.primary{background:linear-gradient(140deg,var(--purple),var(--accent));border-color:transparent;color:#fff}
-  .btn.primary:hover{filter:brightness(1.08)}
-  .btn.danger:hover{color:#fca5a5;border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.08)}
+  .btn.primary:hover{filter:brightness(1.08);color:#fff}
+  .btn.danger:hover{color:#dc2626;border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.08)}
+  .btn.solid-danger{background:#ef4444;border-color:transparent;color:#fff}
+  .btn.solid-danger:hover{filter:brightness(1.06);color:#fff}
 
   .timer{
     position:fixed;right:14px;bottom:calc(14px + var(--safe-b));z-index:50;
     display:none;align-items:center;gap:10px;padding:9px 10px 9px 14px;border-radius:99px;
-    background:rgba(21,29,43,.94);backdrop-filter:blur(12px);border:1px solid var(--line);box-shadow:var(--shadow)
+    background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--line);box-shadow:var(--shadow)
   }
   .timer.show{display:flex}
   .timer .t{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.5px;min-width:56px;text-align:center}
@@ -261,13 +364,13 @@
   .toast{
     position:fixed;left:50%;transform:translateX(-50%) translateY(20px);
     bottom:calc(18px + var(--safe-b));z-index:60;
-    background:rgba(21,29,43,.96);border:1px solid var(--line);border-radius:99px;
+    background:var(--glass);border:1px solid var(--line);border-radius:99px;
     padding:9px 18px;font-size:13px;font-weight:600;box-shadow:var(--shadow);
     opacity:0;pointer-events:none;transition:.25s ease
   }
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-  .sheet-bg{position:fixed;inset:0;background:rgba(3,6,12,.7);backdrop-filter:blur(3px);z-index:70;display:none}
+  .sheet-bg{position:fixed;inset:0;background:var(--scrim);backdrop-filter:blur(3px);z-index:70;display:none}
   .sheet-bg.show{display:block}
   .sheet{
     position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(460px,100%);z-index:71;
@@ -280,20 +383,22 @@
   .sheet .row p{margin:0;font-size:13.5px}
   .sheet .row small{display:block;color:var(--txt-3);font-size:11.5px}
   .switch{width:46px;height:27px;border-radius:99px;background:var(--line);position:relative;transition:.2s;flex:none}
-  .switch i{position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;transition:.2s}
+  .switch i{position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:.2s}
   .switch.on{background:var(--ok)}
   .switch.on i{left:22px}
 
-  @media (max-width:560px){
-    .day-head{padding:14px;gap:12px}
-    .day-head h2{font-size:18px}
-    .stat{flex:1;min-width:0;padding:7px 10px}
-    .stat b{font-size:16px}
-    .ex-top{padding:12px}
-    .sets{padding:0 12px 10px;grid-template-columns:1fr}
-    .ex-foot,.note-wrap{padding-left:12px;padding-right:12px}
-    .field input{height:42px;font-size:16px}
+  /* ---------- CONFIRMACIÓN ---------- */
+  #modalBg{z-index:80}
+  .modal{
+    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:81;
+    width:min(360px,calc(100% - 32px));display:none;
+    background:var(--card);border:1px solid var(--line);border-radius:18px;
+    padding:20px;box-shadow:var(--shadow)
   }
+  .modal.show{display:block}
+  .modal h3{margin:0 0 6px;font-size:16.5px}
+  .modal p{margin:0 0 18px;font-size:13.5px;color:var(--txt-2);line-height:1.5}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end}
 </style>
 </head>
 <body>
@@ -303,28 +408,35 @@
     <div class="top">
       <div class="brand">
         <div class="logo">🏋️</div>
-        <div>
-          <h1>Gerardo Mijares</h1>
-          <p>Registro de entrenamiento</p>
-        </div>
       </div>
+
+      <div class="weeknav">
+        <button class="arrow" id="prevWeek" aria-label="Semana anterior">‹</button>
+        <div class="week-pill">
+          <span id="weekLabel">Semana 1</span>
+          <span class="dates" id="weekDates"></span>
+        </div>
+        <button class="arrow" id="nextWeek" aria-label="Semana siguiente">›</button>
+      </div>
+
       <div class="top-actions">
+        <button class="icon-btn" id="btnTheme" title="Cambiar tema" aria-label="Cambiar tema">☀︎</button>
         <button class="icon-btn" id="btnSettings" title="Ajustes" aria-label="Ajustes">⚙︎</button>
       </div>
-    </div>
-
-    <div class="weeknav">
-      <button class="arrow" id="prevWeek" aria-label="Semana anterior">‹</button>
-      <div class="week-pill">
-        <span id="weekLabel">Semana 1</span>
-        <span class="dates" id="weekDates"></span>
-      </div>
-      <button class="arrow" id="nextWeek" aria-label="Semana siguiente">›</button>
     </div>
 
     <nav class="days" id="dayTabs"></nav>
   </div>
 </header>
+
+<div class="pinbar" id="pinbar" aria-hidden="true">
+  <div class="wrap">
+    <span class="ttl" id="pinTitle"></span>
+    <span class="ser" id="pinSets"></span>
+    <span class="pct" id="pinPct"></span>
+  </div>
+  <span class="prog"><i id="pinBar"></i></span>
+</div>
 
 <main class="wrap" id="main"></main>
 
@@ -359,6 +471,16 @@
   </div>
   <div class="row" style="border:0;padding-top:16px">
     <button class="btn primary" id="sheetClose" style="width:100%;justify-content:center">Listo</button>
+  </div>
+</div>
+
+<div class="sheet-bg" id="modalBg"></div>
+<div class="modal" id="modal" role="alertdialog" aria-modal="true" aria-labelledby="modalTitle">
+  <h3 id="modalTitle"></h3>
+  <p id="modalText"></p>
+  <div class="modal-actions">
+    <button class="btn" id="modalNo">Cancelar</button>
+    <button class="btn solid-danger" id="modalYes">Eliminar</button>
   </div>
 </div>
 
@@ -459,16 +581,47 @@ const TOTAL_WEEKS = 16;
    ESTADO / PERSISTENCIA
    ========================================================= */
 const KEY = 'train.gm.v1';
-const defaults = () => ({ start:isoMonday(new Date()), week:1, autoTimer:true, rest:90, log:{} });
+const FALLBACK_CFG = { theme:'dark', autoTimer:true, restSeconds:60 };
+let CONFIG = FALLBACK_CFG;
+const defaults = () => ({ start:isoMonday(new Date()), week:1, prefs:{}, log:{} });
 
-let state = load();
+// prefs solo guarda lo que el usuario cambió a mano; el resto viene de config.json
+const CFG_OF = { theme:'theme', autoTimer:'autoTimer', rest:'restSeconds' };
+function pref(k){
+  return state.prefs[k] !== undefined ? state.prefs[k] : CONFIG[CFG_OF[k]];
+}
+function setPref(k, v){ state.prefs[k] = v; save(1); }
+
+let state = defaults();
 let selDay = todayWeekday();
+const noteOpen = new Set();   // ejercicios con el editor de nota abierto
+const expandedEx = new Set(); // ejercicios completados que el usuario volvió a abrir
+const drafts = {};            // borradores de nota sin guardar
+
+// config.json define los valores por defecto; los ajustes guardados siempre ganan
+async function loadConfig(){
+  try{
+    const r = await fetch('config.json', { cache:'no-cache' });
+    if(!r.ok) return FALLBACK_CFG;
+    const j = await r.json();
+    const rest = Number(j.restSeconds);
+    return {
+      theme: j.theme === 'light' ? 'light' : 'dark',
+      autoTimer: j.autoTimer !== false,
+      restSeconds: [45,60,90,120,180].includes(rest) ? rest : FALLBACK_CFG.restSeconds
+    };
+  }catch(e){
+    return FALLBACK_CFG;
+  }
+}
 
 function load(){
   try{
     const raw = localStorage.getItem(KEY);
-    if(!raw) return defaults();
-    return Object.assign(defaults(), JSON.parse(raw));
+    const base = defaults();
+    if(!raw) return base;
+    const s = JSON.parse(raw);
+    return { start:s.start || base.start, week:s.week || 1, prefs:s.prefs || {}, log:s.log || {} };
   }catch(e){ return defaults(); }
 }
 let saveT;
@@ -480,15 +633,22 @@ function save(quiet){
   }, 200);
 }
 
-function entry(exId, series){
+function entry(x){
   const wk = 'w' + state.week;
-  state.log[wk] = state.log[wk] || {};
-  let e = state.log[wk][exId];
-  if(!e){ e = { sets:[], borg:'', notes:'' }; state.log[wk][exId] = e; }
-  while(e.sets.length < series) e.sets.push({ w:'', r:'', d:false });
+  const log = state.log[wk] = state.log[wk] || {};
+  let e = log[x.id];
+  if(!e){
+    e = { sets:[], borg:'', notes: x.ajuste ? '⚙︎ ' + x.ajuste : '', n:x.series };
+    log[x.id] = e;
+  }
+  if(typeof e.n !== 'number') e.n = x.series;
+  if(typeof e.notes !== 'string') e.notes = '';
+  while(e.sets.length < e.n) e.sets.push({ w:'', r:'', d:false });
+  if(e.sets.length > e.n) e.sets.length = e.n;
   return e;
 }
 function peek(week, exId){ return (state.log['w'+week] || {})[exId] || null; }
+function setCount(week, x){ const e = peek(week, x.id); return e ? e.sets.length : x.series; }
 
 /* =========================================================
    UTILIDADES
@@ -530,7 +690,7 @@ function dayProgress(week, day){
   if(!day) return { done:0, total:0, pct:0 };
   let done = 0, total = 0;
   day.blocks.forEach(b => b.ex.forEach(x => {
-    total += x.series;
+    total += setCount(week, x);
     const e = peek(week, x.id);
     if(e) done += e.sets.filter(s => s.d).length;
   }));
@@ -572,14 +732,14 @@ function renderHeader(){
   }).join('');
 
   const sel = tabs.querySelector('.day.sel');
-  if(sel) sel.scrollIntoView({ block:'nearest', inline:'center', behavior:'smooth' });
+  if(sel) tabs.scrollTo({ left: sel.offsetLeft - (tabs.clientWidth - sel.offsetWidth)/2, behavior:'smooth' });
 }
 
 function renderDay(){
   const day = sessionOf(selDay);
   const wd = WEEKDAYS.find(w => w.i === selDay);
   const d = dayDate(state.week, selDay);
-  const fecha = d.toLocaleDateString('es-MX',{ day:'numeric', month:'long' });
+  const fecha = d.toLocaleDateString('es-MX',{ day:'numeric', month:'short' }).replace('.','');
 
   if(!day){
     main.innerHTML = `<div class="rest-card">
@@ -587,24 +747,20 @@ function renderDay(){
       <h2>Día de descanso</h2>
       <p>${esc(wd.l)} ${esc(fecha)} · recupera, hidrátate y duerme bien.</p>
     </div>`;
+    resetPin();
     return;
   }
 
   const p = dayProgress(state.week, day);
   const vol = dayVolume(state.week, day);
-  const R = 25, C = 2 * Math.PI * R;
+  const R = 24, C = 2 * Math.PI * R;
 
   let html = `
-  <section class="day-head">
-    <div class="t">
-      <span class="tag ${day.type}">${day.type==='inf'?'Tren inferior':'Tren superior'} · ${esc(day.variant)}</span>
-      <h2 style="margin-top:8px">${esc(day.name)} ${esc(day.variant)}</h2>
-      <div class="sub">${esc(wd.l)} · ${esc(fecha)}</div>
-    </div>
+  <section class="day-head ${day.type}">
     <div class="ring">
-      <svg width="58" height="58">
-        <circle cx="29" cy="29" r="${R}" stroke="rgba(255,255,255,.09)" stroke-width="6" fill="none"/>
-        <circle cx="29" cy="29" r="${R}" stroke="url(#g)" stroke-width="6" fill="none" stroke-linecap="round"
+      <svg viewBox="0 0 56 56">
+        <circle cx="28" cy="28" r="${R}" style="stroke:var(--track)" stroke-width="6" fill="none"/>
+        <circle cx="28" cy="28" r="${R}" stroke="url(#g)" stroke-width="6" fill="none" stroke-linecap="round"
           stroke-dasharray="${C}" stroke-dashoffset="${C - C*p.pct/100}"/>
         <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#22c55e"/>
@@ -612,16 +768,16 @@ function renderDay(){
       </svg>
       <div class="val">${p.pct}%</div>
     </div>
-    <div class="stats">
-      <div class="stat"><b>${p.done}/${p.total}</b><span>Series</span></div>
-      <div class="stat"><b>${vol.toLocaleString('es-MX')}</b><span>Volumen kg</span></div>
+    <div class="t">
+      <h2>${esc(day.name)} ${esc(day.variant)}</h2>
+      <div class="sub">${esc(wd.l)} ${esc(fecha)} · ${p.done}/${p.total} series · ${vol.toLocaleString('es-MX')} kg</div>
     </div>
   </section>`;
 
   day.blocks.forEach(b => {
     html += `<div class="block ${b.bis?'bis':''}">
       <div class="block-label ${b.bis?'bis':''}"><i></i>${esc(b.label)}
-        ${b.bis ? '<span class="hint">— sin descanso entre ejercicios</span>' : ''}</div>
+        ${b.bis ? '<span class="hint">— sin descanso</span>' : ''}</div>
       <div class="cards">${b.ex.map(x => exCard(x)).join('')}</div>
     </div>`;
   });
@@ -633,15 +789,48 @@ function renderDay(){
   </div>`;
 
   main.innerHTML = html;
+  markClampedNotes();
+  updatePin(day, p);
+}
+
+function markClampedNotes(){
+  main.querySelectorAll('.note-view').forEach(v => {
+    const t = v.querySelector('.txt');
+    v.classList.toggle('clamped', t.scrollHeight - t.clientHeight > 2);
+  });
+}
+
+function doneSummary(e, x){
+  const uniq = a => [...new Set(a.filter(Boolean))];
+  const reps = uniq(e.sets.map(s => s.r));
+  const ws = uniq(e.sets.map(s => s.w));
+  const rTxt = reps.length === 1 ? reps[0] : x.reps;
+  if(!ws.length) return `${e.sets.length}×${rTxt}`;
+  const nums = ws.map(num);
+  const wTxt = ws.length === 1 ? ws[0] : `${Math.min(...nums)}–${Math.max(...nums)}`;
+  return `${e.sets.length}×${rTxt} · ${wTxt} ${unitOf(x.peso)}`;
 }
 
 function exCard(x){
-  const e = entry(x.id, x.series);
+  const e = entry(x);
   const prev = state.week > 1 ? peek(state.week - 1, x.id) : null;
   const unit = unitOf(x.peso);
-  const allDone = e.sets.every(s => s.d);
-  const borg = e.borg || '';
-  const lv = Math.max(0, BORG.indexOf(borg) - 1);
+  const allDone = e.sets.length > 0 && e.sets.every(s => s.d);
+  const editing = noteOpen.has(x.id);
+  const draft = drafts[x.id] !== undefined ? drafts[x.id] : e.notes;
+  const lv = Math.max(0, BORG.indexOf(e.borg || '') - 1);
+
+  if(allDone && !expandedEx.has(x.id)){
+    return `<article class="ex done collapsed" data-ex="${x.id}">
+      <button class="ex-sum" data-act="toggle-ex">
+        <span class="tick">✓</span>
+        <span class="nm">${esc(x.name)}</span>
+        ${e.notes.trim() ? '<span class="nt">📝</span>' : ''}
+        <span class="rs">${esc(doneSummary(e, x))}</span>
+        <span class="chev">›</span>
+      </button>
+    </article>`;
+  }
 
   const sets = e.sets.map((s, i) => {
     const ph = i > 0 ? (e.sets[i-1].w || '') : '';
@@ -662,36 +851,48 @@ function exCard(x){
     </div>`;
   }).join('');
 
-  const prevTxt = prev && prev.sets.some(s => s.w)
-    ? `S. anterior: ${prev.sets.map(s => s.w || '–').join(' / ')}` : '';
-
-  return `<article class="ex ${allDone?'done':''}" data-ex="${x.id}" data-series="${x.series}">
-    <div class="ex-top">
+  return `<article class="ex ${allDone?'done':''}" data-ex="${x.id}">
+    <div class="ex-top" ${allDone ? 'data-act="toggle-ex"' : ''}>
       <div class="ex-name">
         <h3>${esc(x.name)}</h3>
-        <div class="metas">
-          <span class="m"><b>${x.series}</b> series</span>
-          <span class="m"><b>${esc(x.reps)}</b> reps</span>
-          ${x.tempo ? `<span class="m tempo">⏱ ${esc(x.tempo)} seg</span>` : ''}
-          <span class="m target">🎯 ${esc(x.peso)}</span>
-          <span class="m borg">Borg ${esc(x.borg)}</span>
-          ${x.ajuste ? `<span class="m adj">⚙︎ ${esc(x.ajuste)}</span>` : ''}
-          ${prevTxt ? `<span class="m">${esc(prevTxt)}</span>` : ''}
+        <div class="exsub">
+          <b>${esc(x.reps)}</b> reps
+          ${x.tempo ? `· <span class="tempo">${esc(x.tempo)} seg</span>` : ''}
+          · <span class="target">${esc(x.peso)}</span>
         </div>
       </div>
-      <button class="check ${allDone?'on':''}" data-act="all" aria-label="Completar ejercicio">✓</button>
+      ${allDone ? '<span class="chev">›</span>' : ''}
     </div>
+
     <div class="sets">${sets}</div>
+
     <div class="ex-foot">
+      <div class="stepper" role="group" aria-label="Número de series">
+        <button data-act="rm-set" aria-label="Quitar la última serie" ${e.sets.length <= 1 ? 'disabled' : ''}>−</button>
+        <span class="v">${e.sets.length}<small>ser</small></span>
+        <button data-act="add-set" aria-label="Añadir una serie">+</button>
+      </div>
       <select class="sel-borg" data-act="borg" data-lv="${lv}" aria-label="Escala de Borg percibida">
         <option value="">Borg —</option>
-        ${BORG.slice(1).map(b => `<option value="${b}" ${b===borg?'selected':''}>Borg ${b}</option>`).join('')}
+        ${BORG.slice(1).map(b => `<option value="${b}" ${b===e.borg?'selected':''}>Borg ${b}</option>`).join('')}
       </select>
-      <button class="note-btn ${e.notes?'has':''}" data-act="note">📝 ${e.notes ? 'Nota' : 'Añadir nota'}</button>
+      ${(!editing && !e.notes.trim()) ? '<button class="note-btn" data-act="note-open">📝 Añadir nota</button>' : ''}
     </div>
-    <div class="note-wrap ${e.notes?'open':''}">
-      <textarea placeholder="Sensaciones, ajustes de máquina, molestias…" data-act="notes">${esc(e.notes)}</textarea>
-    </div>
+
+    ${editing ? `<div class="note-edit">
+      <textarea data-act="note-draft" placeholder="Sensaciones, ajustes de máquina, molestias…">${esc(draft)}</textarea>
+      <div class="note-actions">
+        <button class="btn" data-act="note-cancel">Cancelar</button>
+        <button class="btn primary" data-act="note-save">Guardar nota</button>
+      </div>
+    </div>` : ''}
+
+    ${(!editing && e.notes.trim()) ? `<div class="note-view">
+      <span class="ico">📝</span>
+      <span class="txt" data-act="note-more">${esc(e.notes)}</span>
+      <button class="more" data-act="note-more">Ver más</button>
+      <button class="edit" data-act="note-open" aria-label="Editar nota">✎</button>
+    </div>` : ''}
   </article>`;
 }
 
@@ -707,12 +908,17 @@ tabs.addEventListener('click', ev => {
 document.getElementById('prevWeek').onclick = () => { if(state.week>1){ state.week--; save(1); refresh(); } };
 document.getElementById('nextWeek').onclick = () => { if(state.week<TOTAL_WEEKS){ state.week++; save(1); refresh(); } };
 
-main.addEventListener('click', ev => {
+main.addEventListener('click', async ev => {
   const card = ev.target.closest('.ex');
   const btn = ev.target.closest('[data-act]');
 
   if(ev.target.closest('#clearDay')){
-    if(confirm('¿Borrar todos los registros de este día?')){
+    const ok = await askConfirm({
+      title:'Limpiar día',
+      text:'Se borrarán los pesos, repeticiones y notas registrados en este día.',
+      ok:'Borrar día'
+    });
+    if(ok){
       const day = sessionOf(selDay);
       day.blocks.forEach(b => b.ex.forEach(x => { delete (state.log['w'+state.week]||{})[x.id]; }));
       save(); refresh();
@@ -724,8 +930,9 @@ main.addEventListener('click', ev => {
     const day = sessionOf(selDay); let n = 0;
     day.blocks.forEach(b => b.ex.forEach(x => {
       const p = peek(state.week - 1, x.id); if(!p) return;
-      const e = entry(x.id, x.series);
-      e.sets = e.sets.map((s,i) => ({ w:(p.sets[i]||{}).w||'', r:(p.sets[i]||{}).r||'', d:false }));
+      const e = entry(x);
+      e.n = p.sets.length;
+      e.sets = p.sets.map(s => ({ w:s.w||'', r:s.r||'', d:false }));
       e.borg = p.borg || ''; n++;
     }));
     save(); refresh(); toast(n ? `Copiados ${n} ejercicios` : 'Sin datos previos');
@@ -734,37 +941,67 @@ main.addEventListener('click', ev => {
   if(!card || !btn) return;
 
   const x = findEx(card.dataset.ex);
-  const e = entry(x.id, x.series);
+  const e = entry(x);
+  const act = btn.dataset.act;
 
-  if(btn.dataset.act === 'set'){
+  if(act === 'set'){
     const i = +btn.closest('.set').dataset.set;
     e.sets[i].d = !e.sets[i].d;
     if(e.sets[i].d){
       if(!e.sets[i].w && i > 0) e.sets[i].w = e.sets[i-1].w;
       if(!e.sets[i].r) e.sets[i].r = /^\d+$/.test(x.reps) ? x.reps : '';
-      if(state.autoTimer) startTimer(state.rest);
+      if(pref('autoTimer')) startTimer(pref('rest'));
+    } else {
+      expandedEx.delete(x.id);
     }
     save(1); refresh();
   }
-  else if(btn.dataset.act === 'all'){
-    const on = !e.sets.every(s => s.d);
-    e.sets.forEach((s,i) => {
-      s.d = on;
-      if(on && !s.w && i > 0) s.w = e.sets[i-1].w;
-    });
-    save(1); refresh();
+  else if(act === 'toggle-ex'){
+    if(expandedEx.has(x.id)) expandedEx.delete(x.id); else expandedEx.add(x.id);
+    refresh();
   }
-  else if(btn.dataset.act === 'note'){
-    const w = card.querySelector('.note-wrap');
-    w.classList.toggle('open');
-    if(w.classList.contains('open')) w.querySelector('textarea').focus();
+  else if(act === 'add-set'){
+    const last = e.sets[e.sets.length - 1];
+    e.n = e.sets.length + 1;
+    e.sets.push({ w: last ? last.w : '', r:'', d:false });
+    save(1); refresh(); toast('Serie S' + e.sets.length + ' añadida');
+  }
+  else if(act === 'rm-set'){
+    if(e.sets.length <= 1) return;
+    const ok = await askConfirm({
+      title:`Eliminar serie S${e.sets.length}`,
+      text:`Se eliminará la última serie de "${x.name}" y sus datos registrados.`,
+      ok:'Eliminar serie'
+    });
+    if(!ok) return;
+    e.sets.pop(); e.n = e.sets.length;
+    save(1); refresh(); toast('Serie eliminada');
+  }
+  else if(act === 'note-open'){
+    noteOpen.add(x.id); refresh();
+    const ta = main.querySelector(`.ex[data-ex="${x.id}"] textarea`);
+    if(ta){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+  }
+  else if(act === 'note-save'){
+    const ta = card.querySelector('textarea');
+    e.notes = ta.value.trim();
+    delete drafts[x.id]; noteOpen.delete(x.id);
+    save(); refresh();
+  }
+  else if(act === 'note-cancel'){
+    delete drafts[x.id]; noteOpen.delete(x.id); refresh();
+  }
+  else if(act === 'note-more'){
+    const v = btn.closest('.note-view');
+    const open = v.classList.toggle('expanded');
+    v.querySelector('.more').textContent = open ? 'Ver menos' : 'Ver más';
   }
 });
 
 main.addEventListener('input', ev => {
   const card = ev.target.closest('.ex'); if(!card) return;
   const x = findEx(card.dataset.ex);
-  const e = entry(x.id, x.series);
+  const e = entry(x);
 
   if(ev.target.dataset.f){
     const i = +ev.target.closest('.set').dataset.set;
@@ -775,17 +1012,13 @@ main.addEventListener('input', ev => {
       next.querySelector('[data-f="w"]').placeholder = ev.target.value.trim() || '—';
     }
   }
-  if(ev.target.dataset.act === 'notes'){
-    e.notes = ev.target.value; save(1);
-    card.querySelector('.note-btn').classList.toggle('has', !!e.notes.trim());
-  }
+  if(ev.target.dataset.act === 'note-draft') drafts[x.id] = ev.target.value;
 });
 
 main.addEventListener('change', ev => {
   if(ev.target.dataset.act !== 'borg') return;
   const card = ev.target.closest('.ex');
-  const x = findEx(card.dataset.ex);
-  entry(x.id, x.series).borg = ev.target.value;
+  entry(findEx(card.dataset.ex)).borg = ev.target.value;
   ev.target.dataset.lv = Math.max(0, BORG.indexOf(ev.target.value) - 1);
   save();
 });
@@ -843,16 +1076,16 @@ const sheet = document.getElementById('sheet'), sheetBg = document.getElementByI
 const swTimer = document.getElementById('swTimer'), restSel = document.getElementById('restSel');
 
 function openSheet(){
-  swTimer.classList.toggle('on', !!state.autoTimer);
-  restSel.value = String(state.rest);
+  swTimer.classList.toggle('on', !!pref('autoTimer'));
+  restSel.value = String(pref('rest'));
   sheet.classList.add('show'); sheetBg.classList.add('show');
 }
 function closeSheet(){ sheet.classList.remove('show'); sheetBg.classList.remove('show'); }
 document.getElementById('btnSettings').onclick = openSheet;
 document.getElementById('sheetClose').onclick = closeSheet;
 sheetBg.onclick = closeSheet;
-swTimer.onclick = () => { state.autoTimer = !state.autoTimer; swTimer.classList.toggle('on', state.autoTimer); save(1); };
-restSel.onchange = () => { state.rest = +restSel.value; save(1); };
+swTimer.onclick = () => { const v = !pref('autoTimer'); setPref('autoTimer', v); swTimer.classList.toggle('on', v); };
+restSel.onchange = () => setPref('rest', +restSel.value);
 
 document.getElementById('btnExport').onclick = () => {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type:'application/json' });
@@ -861,11 +1094,99 @@ document.getElementById('btnExport').onclick = () => {
   a.download = 'entrenamiento-gerardo-' + new Date().toISOString().slice(0,10) + '.json';
   a.click(); URL.revokeObjectURL(a.href);
 };
-document.getElementById('btnWipe').onclick = () => {
-  if(confirm('Se borrarán TODOS los registros de todas las semanas. ¿Continuar?')){
-    state = defaults(); localStorage.removeItem(KEY); closeSheet(); refresh(); toast('Datos borrados');
+document.getElementById('btnWipe').onclick = async () => {
+  const ok = await askConfirm({
+    title:'Borrar todos los datos',
+    text:'Se eliminarán los registros de todas las semanas de este dispositivo. Esta acción no se puede deshacer.',
+    ok:'Borrar todo'
+  });
+  if(ok){
+    const prefs = state.prefs;
+    state = defaults(); state.prefs = prefs;
+    localStorage.removeItem(KEY); closeSheet(); applyTheme(); refresh(); toast('Datos borrados');
   }
 };
+
+/* ---- confirmación ---- */
+const modal = document.getElementById('modal'), modalBg = document.getElementById('modalBg');
+let resolveConfirm = null;
+
+function askConfirm({ title, text, ok = 'Eliminar' }){
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalText').textContent = text;
+  document.getElementById('modalYes').textContent = ok;
+  modal.classList.add('show'); modalBg.classList.add('show');
+  return new Promise(res => { resolveConfirm = res; });
+}
+function endConfirm(v){
+  modal.classList.remove('show'); modalBg.classList.remove('show');
+  if(resolveConfirm){ resolveConfirm(v); resolveConfirm = null; }
+}
+document.getElementById('modalYes').onclick = () => endConfirm(true);
+document.getElementById('modalNo').onclick = () => endConfirm(false);
+modalBg.onclick = () => endConfirm(false);
+document.addEventListener('keydown', ev => {
+  if(ev.key === 'Escape'){ if(resolveConfirm) endConfirm(false); else closeSheet(); }
+});
+
+/* ---- tema claro / oscuro ---- */
+function applyTheme(){
+  const dark = pref('theme') !== 'light';
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  document.querySelector('meta[name="theme-color"]').content = dark ? '#0b0f16' : '#f2f5fb';
+  const b = document.getElementById('btnTheme');
+  b.textContent = dark ? '☀︎' : '☾';
+  b.title = dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
+}
+document.getElementById('btnTheme').onclick = () => {
+  setPref('theme', pref('theme') === 'light' ? 'dark' : 'light');
+  applyTheme();
+};
+
+/* ---- navegación que se oculta + barra fija del día ---- */
+const headerEl = document.querySelector('header');
+const pinbar = document.getElementById('pinbar');
+let navHidden = false, pinAt = Infinity, lastY = 0, ticking = false;
+
+function measureHeader(){
+  document.documentElement.style.setProperty('--head-h', headerEl.offsetHeight + 'px');
+  const el = main.querySelector('.day-head');
+  pinAt = el ? el.getBoundingClientRect().bottom + scrollY - headerEl.offsetHeight : Infinity;
+}
+function updatePin(day, p){
+  document.getElementById('pinTitle').textContent = day.name + ' ' + day.variant;
+  document.getElementById('pinSets').textContent = p.done + '/' + p.total;
+  document.getElementById('pinPct').textContent = p.pct + '%';
+  document.getElementById('pinBar').style.width = p.pct + '%';
+  measureHeader();
+}
+function resetPin(){
+  pinAt = Infinity;
+  pinbar.classList.remove('show');
+}
+function setNav(hidden){
+  if(hidden === navHidden) return;
+  navHidden = hidden;
+  headerEl.classList.toggle('hide', hidden);
+  document.body.classList.toggle('nav-hidden', hidden);
+}
+function onScroll(){
+  const y = Math.max(0, scrollY);
+  const dy = y - lastY;
+  if(Math.abs(dy) >= 8){
+    if(dy > 0 && y > pinAt) setNav(true);
+    else if(dy < 0) setNav(false);
+    lastY = y;
+  }
+  if(y <= 4) setNav(false);
+  pinbar.classList.toggle('show', y > pinAt);
+}
+addEventListener('scroll', () => {
+  if(ticking) return;
+  ticking = true;
+  requestAnimationFrame(() => { ticking = false; onScroll(); });
+}, { passive:true });
+addEventListener('resize', measureHeader);
 
 let toastT;
 function toast(msg){
@@ -877,14 +1198,21 @@ function toast(msg){
 /* =========================================================
    INICIO
    ========================================================= */
-(function init(){
+(async function boot(){
+  CONFIG = await loadConfig();
+  state = load();
   const auto = currentWeekNumber();
   if(!localStorage.getItem(KEY)) state.week = 1; else state.week = state.week || auto;
   if(!sessionOf(selDay)){
     const next = PROGRAM.find(d => d.weekday >= selDay) || PROGRAM[0];
     selDay = next.weekday;
   }
-  refresh(); save(1);
+  applyTheme();
+  refresh();
+  measureHeader();
+  lastY = scrollY;
+  onScroll();
+  save(1);
 })();
 </script>
 </body>
