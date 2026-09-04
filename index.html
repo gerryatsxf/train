@@ -584,7 +584,7 @@
     <div class="switch" id="swSound"><i></i></div>
   </div>
   <div class="row">
-    <p>Alarma con pantalla bloqueada<small>Mantiene el audio activo durante el descanso; puede atenuar o pausar la música de otras apps</small></p>
+    <p>Alarma con pantalla bloqueada<small>Volumen multimedia y audio activo durante el descanso; pausa la música de otras apps. Apagado: convive con la música, pero iOS puede enmudecer la alarma</small></p>
     <div class="switch" id="swBg"><i></i></div>
   </div>
   <div class="row">
@@ -1471,7 +1471,7 @@ document.getElementById('timerAdd').onclick = () => {
 /* =========================================================
    SONIDO
    ========================================================= */
-let actx = null, sessionSet = false;
+let actx = null;
 // iOS solo habilita el contexto dentro de un gesto real y lo suspende al volver del bloqueo
 function audio(){
   try{
@@ -1479,20 +1479,22 @@ function audio(){
       const Ctx = window.AudioContext || window.webkitAudioContext;
       if(!Ctx) return null;
       actx = new Ctx();
-      setAudioSession();
     }
+    setAudioSession();
     if(actx.state === 'suspended') actx.resume();
     return actx;
   }catch(e){ return null; }
 }
-// 'transient' convive con la música de otras apps; 'ambient' NO se usa porque el switch
-// de silencio lo enmudece. Se asigna una sola vez: reasignarla corta el sonido en curso.
+/* 'playback' sobrevive al bloqueo y usa el volumen multimedia, pero se adueña de la sesión;
+   'transient' convive con la música de otras apps, aunque iOS la desactiva tras un rato en
+   segundo plano. Se elige según el ajuste y solo se reasigna cuando cambia: reasignarla
+   en cada sonido corta el audio en curso. */
 function setAudioSession(){
   const s = navigator.audioSession;
-  if(!s || sessionSet) return;
-  for(const t of ['transient', 'playback']){
-    try{ s.type = t; if(s.type === t){ sessionSet = true; return; } }catch(e){}
-  }
+  if(!s) return;
+  const want = pref('bgAlarm') ? 'playback' : 'transient';
+  if(s.type === want) return;
+  try{ s.type = want; }catch(e){}
 }
 function unlockAudio(){
   const ctx = audio(); if(!ctx) return;
@@ -1508,8 +1510,7 @@ document.addEventListener('visibilitychange', () => {
     if(!tInt) disarmAlarm();               // al ocultarse sin descanso activo no debe quedar nada
     return;
   }
-  sessionSet = false; setAudioSession();   // iOS reinicia la categoría tras una interrupción
-  const ctx = audio();
+  const ctx = audio();                     // reaplica la categoría si iOS la reinició
   // tras el bloqueo, resume() fuera de un gesto no siempre restaura el audio en iOS
   if(ctx && ctx.state !== 'running'){
     document.addEventListener('pointerdown', () => { try{ ctx.resume(); }catch(e){} }, { once:true, passive:true });
@@ -1700,6 +1701,7 @@ swBg.onclick = () => {
   const v = !pref('bgAlarm');
   setPref('bgAlarm', v);
   swBg.classList.toggle('on', v);
+  setAudioSession();                    // la categoría de audio depende de este ajuste
   if(!v) stopKeepAlive();
   else if(tInt) armAlarm(Math.max(0, (tEndAt - Date.now()) / 1000));
 };
