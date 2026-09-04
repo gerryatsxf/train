@@ -1308,7 +1308,10 @@ function tick(){
   const left = Math.max(0, Math.ceil((tEndAt - Date.now()) / 1000));
   if(left !== tLeft){
     tLeft = left; paint();
-    if(left > 0) cueCrossing(prev, left);
+    if(left > 0){
+      sfx(left % 2 ? 'tick' : 'tock');
+      cueCrossing(prev, left);
+    }
   }
   if(Date.now() >= tEndAt){
     const elapsed = Math.round((Date.now() - tStartAt) / 1000);
@@ -1568,6 +1571,8 @@ addEventListener('pagehide', () => { if(!tInt) disarmAlarm(); });
    más presente que un seno a la misma amplitud. */
 const SFX = {
   tap:    [{ k:'n', f:2200, d:.05, g:.55 }, { t:.005, f:1046, d:.09, g:.45, w:'triangle' }],
+  tick:   [{ k:'n', f:4200, d:.02, g:.045 }],
+  tock:   [{ k:'n', f:2600, d:.025, g:.04 }],
   check:  [{ k:'n', f:3000, d:.04, g:.50 }, { t:.01,  f:880,  d:.11, g:.75 }, { t:.08, f:1319, d:.18, g:.68 }],
   undo:   [{ k:'n', f:1500, d:.04, g:.45 }, { t:.01,  f:659,  d:.11, g:.68 }, { t:.08, f:440,  d:.17, g:.60 }],
   finish: [{ f:784,  d:.12, g:.78 }, { t:.09, f:988,  d:.12, g:.78 }, { t:.18, f:1319, d:.28, g:.85 }],
