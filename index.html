@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <meta name="theme-color" content="#0d1117" />
 <title>Gerardo Mijares · Registro de entrenamiento</title>
 <style>
@@ -118,8 +121,10 @@
   .logo{
     width:34px;height:34px;border-radius:10px;flex:none;
     background:linear-gradient(140deg,var(--purple),var(--accent-2));
-    display:grid;place-items:center;font-size:16px
+    display:grid;place-items:center;font-size:16px;
+    transition:transform .12s ease,filter .12s ease
   }
+  .logo:active{transform:scale(.92);filter:brightness(1.15)}
   .top-actions{margin-left:auto;display:flex;gap:6px;align-items:center;flex:none}
 
   .icon-btn{
@@ -276,13 +281,15 @@
   }
   .stepper .v small{display:block;font-size:8.5px;font-weight:700;letter-spacing:.6px;color:var(--txt-3);text-transform:uppercase;margin-top:-2px}
 
-  .ex-foot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:0 12px 12px}
+  .ex-foot{display:flex;gap:8px;align-items:center;flex-wrap:nowrap;padding:0 12px 12px}
   .sel-borg{
-    height:34px;border-radius:9px;background:var(--bg-2);border:1px solid var(--line);padding:0 26px 0 10px;
+    height:34px;border-radius:9px;background:var(--bg-2);border:1px solid var(--line);padding:0 26px;
     font-size:12.5px;font-weight:700;outline:none;appearance:none;cursor:pointer;
+    text-align:center;text-align-last:center;
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path d='M1 3l4 4 4-4' stroke='%236b7a96' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>");
     background-repeat:no-repeat;background-position:right 9px center
   }
+  .ex-foot .sel-borg{flex:1;min-width:0}
   .sel-borg:focus{border-color:var(--accent)}
   .sel-borg[data-lv="1"]{color:#16a34a} .sel-borg[data-lv="2"]{color:#0284c7}
   .sel-borg[data-lv="3"]{color:#d97706} .sel-borg[data-lv="4"]{color:#dc2626}
@@ -290,9 +297,11 @@
   :root[data-theme="dark"] .sel-borg[data-lv="2"]{color:#7dd3fc}
   :root[data-theme="dark"] .sel-borg[data-lv="3"]{color:#fbbf24}
   :root[data-theme="dark"] .sel-borg[data-lv="4"]{color:#fca5a5}
-  .note-btn{height:34px;padding:0 12px;border-radius:9px;background:var(--bg-2);border:1px solid var(--line);
-    font-size:12.5px;color:var(--txt-2);display:inline-flex;align-items:center;gap:6px;transition:.15s}
-  .note-btn:hover{color:var(--txt);border-color:var(--hover-line)}
+  .note-btn{
+    width:34px;height:34px;flex:none;border-radius:9px;background:var(--bg-2);border:1px solid var(--line);
+    font-size:14px;display:grid;place-items:center;transition:.15s
+  }
+  .note-btn:hover{border-color:var(--hover-line)}
 
   /* nota en modo lectura */
   .note-view{
@@ -316,11 +325,12 @@
   /* nota en modo edición */
   .note-edit{padding:0 12px 12px}
   .note-edit textarea{
-    width:100%;min-height:76px;resize:vertical;border-radius:11px;border:1px solid var(--line);
-    background:var(--bg-2);padding:10px 12px;font-size:13.5px;outline:none;line-height:1.5
+    width:100%;min-height:58px;resize:vertical;border-radius:11px;border:1px solid var(--line);
+    background:var(--bg-2);padding:9px 11px;font-size:13.5px;outline:none;line-height:1.45
   }
   .note-edit textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,92,255,.15)}
-  .note-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+  .note-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:7px}
+  .note-actions .btn{height:34px;padding:0 13px;font-size:12.5px}
 
   /* ---------- REST DAY ---------- */
   .rest-card{
@@ -407,7 +417,7 @@
   <div class="wrap">
     <div class="top">
       <div class="brand">
-        <div class="logo">🏋️</div>
+        <button class="logo" id="btnReload" title="Buscar actualización" aria-label="Buscar actualización y recargar">🏋️</button>
       </div>
 
       <div class="weeknav">
@@ -469,8 +479,9 @@
       <button class="btn danger" id="btnWipe">Borrar todo</button>
     </div>
   </div>
-  <div class="row" style="border:0;padding-top:16px">
+  <div class="row" style="border:0;padding-top:16px;display:block">
     <button class="btn primary" id="sheetClose" style="width:100%;justify-content:center">Listo</button>
+    <p id="appVer" style="text-align:center;color:var(--txt-3);font-size:11px;margin:10px 0 0"></p>
   </div>
 </div>
 
@@ -601,11 +612,12 @@ const drafts = {};            // borradores de nota sin guardar
 // config.json define los valores por defecto; los ajustes guardados siempre ganan
 async function loadConfig(){
   try{
-    const r = await fetch('config.json', { cache:'no-cache' });
+    const r = await fetch('config.json?t=' + Date.now(), { cache:'no-store' });
     if(!r.ok) return FALLBACK_CFG;
     const j = await r.json();
     const rest = Number(j.restSeconds);
     return {
+      version: j.version ? String(j.version) : '',
       theme: j.theme === 'light' ? 'light' : 'dark',
       autoTimer: j.autoTimer !== false,
       restSeconds: [45,60,90,120,180].includes(rest) ? rest : FALLBACK_CFG.restSeconds
@@ -613,6 +625,26 @@ async function loadConfig(){
   }catch(e){
     return FALLBACK_CFG;
   }
+}
+
+// si la versión publicada no coincide con la de la URL, recarga apuntando a la nueva
+function ensureFresh(version){
+  if(!version) return false;
+  const url = new URL(location.href);
+  if(url.searchParams.get('v') === version) return false;
+  url.searchParams.set('v', version);
+  location.replace(url.toString());
+  return true;
+}
+
+// recarga manual: relee config.json y pide el HTML a la red, no a la caché
+async function forceRefresh(){
+  toast('Buscando actualización…');
+  const cfg = await loadConfig();
+  const url = new URL(location.href);
+  if(cfg.version) url.searchParams.set('v', cfg.version);
+  url.searchParams.set('r', Date.now());
+  location.replace(url.toString());
 }
 
 function load(){
@@ -876,7 +908,7 @@ function exCard(x){
         <option value="">Borg —</option>
         ${BORG.slice(1).map(b => `<option value="${b}" ${b===e.borg?'selected':''}>Borg ${b}</option>`).join('')}
       </select>
-      ${(!editing && !e.notes.trim()) ? '<button class="note-btn" data-act="note-open">📝 Añadir nota</button>' : ''}
+      ${(!editing && !e.notes.trim()) ? '<button class="note-btn" data-act="note-open" title="Añadir nota" aria-label="Añadir nota">📝</button>' : ''}
     </div>
 
     ${editing ? `<div class="note-edit">
@@ -986,10 +1018,14 @@ main.addEventListener('click', async ev => {
     const ta = card.querySelector('textarea');
     e.notes = ta.value.trim();
     delete drafts[x.id]; noteOpen.delete(x.id);
-    save(); refresh();
+    ta.blur();
+    save(); refresh(); resetZoom();
   }
   else if(act === 'note-cancel'){
-    delete drafts[x.id]; noteOpen.delete(x.id); refresh();
+    const ta = card.querySelector('textarea');
+    if(ta) ta.blur();
+    delete drafts[x.id]; noteOpen.delete(x.id);
+    refresh(); resetZoom();
   }
   else if(act === 'note-more'){
     const v = btn.closest('.note-view');
@@ -1142,6 +1178,7 @@ document.getElementById('btnTheme').onclick = () => {
   setPref('theme', pref('theme') === 'light' ? 'dark' : 'light');
   applyTheme();
 };
+document.getElementById('btnReload').onclick = forceRefresh;
 
 /* ---- navegación que se oculta + barra fija del día ---- */
 const headerEl = document.querySelector('header');
@@ -1195,11 +1232,22 @@ function toast(msg){
   clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 1600);
 }
 
+// iOS no deshace el zoom al salir de un campo: fijar maximum-scale un instante lo fuerza
+function resetZoom(){
+  const vp = document.querySelector('meta[name="viewport"]');
+  if(!vp) return;
+  const base = vp.dataset.base || vp.getAttribute('content');
+  vp.dataset.base = base;
+  vp.setAttribute('content', base + ', maximum-scale=1');
+  setTimeout(() => vp.setAttribute('content', base), 300);
+}
+
 /* =========================================================
    INICIO
    ========================================================= */
 (async function boot(){
   CONFIG = await loadConfig();
+  if(ensureFresh(CONFIG.version)) return;
   state = load();
   const auto = currentWeekNumber();
   if(!localStorage.getItem(KEY)) state.week = 1; else state.week = state.week || auto;
@@ -1212,6 +1260,7 @@ function toast(msg){
   measureHeader();
   lastY = scrollY;
   onScroll();
+  document.getElementById('appVer').textContent = 'Versión ' + (CONFIG.version || 'local');
   save(1);
 })();
 </script>
