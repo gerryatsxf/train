@@ -584,7 +584,7 @@
     <div class="switch" id="swSound"><i></i></div>
   </div>
   <div class="row">
-    <p>Alarma con pantalla bloqueada<small>Mantiene el audio activo durante el descanso; pausa la música de otras apps</small></p>
+    <p>Alarma con pantalla bloqueada<small>Mantiene el audio activo durante el descanso; puede atenuar o pausar la música de otras apps</small></p>
     <div class="switch" id="swBg"><i></i></div>
   </div>
   <div class="row">
@@ -731,7 +731,7 @@ const TOTAL_WEEKS = 16;
    ESTADO / PERSISTENCIA
    ========================================================= */
 const KEY = 'train.gm.v1';
-const FALLBACK_CFG = { theme:'dark', autoTimer:true, restSeconds:60, restEndPopup:true, sounds:true, lockedAlarm:false };
+const FALLBACK_CFG = { theme:'dark', autoTimer:true, restSeconds:60, restEndPopup:true, sounds:true, lockedAlarm:true };
 let CONFIG = FALLBACK_CFG;
 const defaults = () => ({ start:isoMonday(new Date()), week:1, prefs:{}, log:{} });
 
@@ -761,7 +761,7 @@ async function loadConfig(){
       autoTimer: j.autoTimer !== false,
       restEndPopup: j.restEndPopup !== false,
       sounds: j.sounds !== false,
-      lockedAlarm: j.lockedAlarm === true,
+      lockedAlarm: j.lockedAlarm !== false,
       restSeconds: [30,45,60,90,120,180].includes(rest) ? rest : FALLBACK_CFG.restSeconds
     };
   }catch(e){
@@ -1172,6 +1172,10 @@ main.addEventListener('click', async ev => {
     } else {
       sfx('undo'); buzz([25]);
       openEx.delete(x.id);
+      if(timerSet && timerSet.exId === x.id && timerSet.i === i && timerSet.week === state.week){
+        stopTimer();                 // el descanso pertenecía a esta serie: se descarta
+        toast('Descanso cancelado');
+      }
     }
     save(1); refresh();
   }
@@ -1312,6 +1316,7 @@ function paint(){
 }
 function stopTimer(keepTarget){
   clearInterval(tInt); tInt = null;
+  tLeft = 0; tEndAt = 0;
   tEl.classList.remove('show','hot');
   disarmAlarm();
   if(!keepTarget){ timerSet = null; markTimingSet(); }
@@ -1499,7 +1504,12 @@ function unlockAudio(){
   document.addEventListener(t, unlockAudio, { once:true, passive:true }));
 document.addEventListener('visibilitychange', () => {
   if(document.visibilityState !== 'visible') return;
-  audio();
+  sessionSet = false; setAudioSession();   // iOS reinicia la categoría tras una interrupción
+  const ctx = audio();
+  // tras el bloqueo, resume() fuera de un gesto no siempre restaura el audio en iOS
+  if(ctx && ctx.state !== 'running'){
+    document.addEventListener('pointerdown', () => { try{ ctx.resume(); }catch(e){} }, { once:true, passive:true });
+  }
   if(tInt) tick();
 });
 
@@ -1567,7 +1577,7 @@ function playSfx(ctx, name, base){
       src.connect(g);
     }
     src.start(t0); src.stop(t0 + n.d + .03);
-    return src;
+    return { src, g };
   });
 }
 function sfx(name, at){
@@ -1576,8 +1586,10 @@ function sfx(name, at){
   if(!ctx) return [];
   if(ctx.state === 'running') return playSfx(ctx, name, at !== undefined ? at : ctx.currentTime);
   if(at !== undefined) return [];
-  // tras una interrupción (otra app tomó el audio) resume() es asíncrono: se reintenta al volver
+  // tras una interrupción resume() es asíncrono; si tarda demasiado el sonido ya no aplica
+  const asked = Date.now();
   if(ctx.resume) ctx.resume().then(() => {
+    if(Date.now() - asked > 1500) return;
     if(ctx.state === 'running') playSfx(ctx, name, ctx.currentTime);
   }).catch(() => {});
   return [];
@@ -1605,8 +1617,13 @@ function armAlarm(seconds){
 function alarmDidRing(){
   return alarmArmed && actx && actx.state === 'running' && actx.currentTime >= alarmAt;
 }
+// Safari no siempre respeta stop() en un nodo agendado a futuro: además se silencia y desconecta
 function disarmAlarm(){
-  alarmNodes.forEach(o => { try{ o.stop(); }catch(e){} });
+  alarmNodes.forEach(n => {
+    try{ n.g.gain.cancelScheduledValues(0); n.g.gain.value = 0; }catch(e){}
+    try{ n.src.stop(0); }catch(e){}
+    try{ n.src.disconnect(); n.g.disconnect(); }catch(e){}
+  });
   alarmNodes = []; alarmArmed = false;
   stopKeepAlive();
 }
