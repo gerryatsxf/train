@@ -1298,9 +1298,9 @@ function tick(){
   if(Date.now() >= tEndAt){
     const elapsed = Math.round((Date.now() - tStartAt) / 1000);
     const alreadyRang = alarmDidRing();
-    releaseAlarm();
-    stopTimer(true);
-    if(!alreadyRang) sfx('alert');   // solo si la alarma agendada no alcanzó a sonar
+    if(alreadyRang) releaseAlarm();  // ya está sonando: se deja terminar
+    stopTimer(true);                 // si no sonó, disarmAlarm() mata los nodos agendados
+    if(!alreadyRang) sfx('alert');
     buzz(); restEnded(elapsed);
   }
 }
@@ -1511,6 +1511,7 @@ document.addEventListener('visibilitychange', () => {
     document.addEventListener('pointerdown', () => { try{ ctx.resume(); }catch(e){} }, { once:true, passive:true });
   }
   if(tInt) tick();
+  else disarmAlarm();                      // sin descanso activo no debe quedar nada agendado
 });
 
 /* Todos los sonidos pasan por un limitador con ganancia de compensación: sube el nivel
