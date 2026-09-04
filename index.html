@@ -1018,14 +1018,14 @@ main.addEventListener('click', async ev => {
     const ta = card.querySelector('textarea');
     e.notes = ta.value.trim();
     delete drafts[x.id]; noteOpen.delete(x.id);
-    ta.blur();
-    save(); refresh(); resetZoom();
+    resetZoom(); ta.blur();
+    save(); refresh();
   }
   else if(act === 'note-cancel'){
     const ta = card.querySelector('textarea');
-    if(ta) ta.blur();
     delete drafts[x.id]; noteOpen.delete(x.id);
-    refresh(); resetZoom();
+    resetZoom(); if(ta) ta.blur();
+    refresh();
   }
   else if(act === 'note-more'){
     const v = btn.closest('.note-view');
@@ -1058,6 +1058,11 @@ main.addEventListener('change', ev => {
   ev.target.dataset.lv = Math.max(0, BORG.indexOf(ev.target.value) - 1);
   save();
 });
+
+// el bloqueo del viewport debe ocurrir antes de que el toque quite el foco del textarea
+main.addEventListener('pointerdown', ev => {
+  if(ev.target.closest('[data-act="note-save"],[data-act="note-cancel"]')) resetZoom();
+}, true);
 
 function findEx(id){
   for(const d of PROGRAM) for(const b of d.blocks) for(const x of b.ex) if(x.id === id) return x;
@@ -1232,14 +1237,18 @@ function toast(msg){
   clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 1600);
 }
 
-// iOS no deshace el zoom al salir de un campo: fijar maximum-scale un instante lo fuerza
+// iOS no deshace el zoom al salir de un campo: hay que fijar maximum-scale ANTES del blur
+const VP = document.querySelector('meta[name="viewport"]');
+const VP_BASE = 'width=device-width, initial-scale=1, viewport-fit=cover';
+const VP_LOCK = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
+let vpT1, vpT2;
+
 function resetZoom(){
-  const vp = document.querySelector('meta[name="viewport"]');
-  if(!vp) return;
-  const base = vp.dataset.base || vp.getAttribute('content');
-  vp.dataset.base = base;
-  vp.setAttribute('content', base + ', maximum-scale=1');
-  setTimeout(() => vp.setAttribute('content', base), 300);
+  clearTimeout(vpT1); clearTimeout(vpT2);
+  VP.setAttribute('content', VP_LOCK);
+  // segundo intento con un string distinto: si el teclado seguía animando, Safari sí lo reevalúa
+  vpT1 = setTimeout(() => VP.setAttribute('content', VP_LOCK.replace('scale=1,', 'scale=1.0,')), 150);
+  vpT2 = setTimeout(() => VP.setAttribute('content', VP_BASE), 700);
 }
 
 /* =========================================================
