@@ -254,8 +254,14 @@
   :root[data-theme="dark"] .exsub .target{color:#7dd3fc}
   .ex.collapsed .exsub{display:none}
   .ex:not(.collapsed) .exdone{display:none}
-  .chev{color:var(--txt-3);font-size:17px;flex:none;line-height:1;transform:rotate(90deg);transition:transform .28s ease}
-  .ex:not(.collapsed) .chev{transform:rotate(-90deg)}
+  .chev{
+    width:44px;height:44px;margin:-3px -6px -3px 0;flex:none;padding:0;
+    display:grid;place-items:center;background:transparent;border:0;border-radius:12px;
+    color:var(--txt-3);font-size:19px;line-height:1;transition:background .15s
+  }
+  .chev:active{background:var(--card-2)}
+  .chev i{font-style:normal;display:block;transform:rotate(90deg);transition:transform .28s ease}
+  .ex:not(.collapsed) .chev i{transform:rotate(-90deg)}
 
   /* plegado suave del cuerpo de la tarjeta */
   .fold{display:grid;grid-template-rows:1fr;transition:grid-template-rows .3s ease}
@@ -1080,7 +1086,7 @@ function exCard(x){
         ${allDone ? `<div class="exdone">${esc(doneSummary(e, x))}${e.notes.trim() ? ' · 📝' : ''}</div>` : ''}
       </div>
       ${restGauge(e)}
-      <span class="chev">›</span>
+      <button class="chev" data-act="toggle-ex" aria-label="Plegar o desplegar ejercicio"><i>›</i></button>
     </div>
 
     <div class="fold"><div class="inner">
