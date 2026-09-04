@@ -1503,32 +1503,35 @@ document.addEventListener('visibilitychange', () => {
   if(tInt) tick();
 });
 
-/* Todos los sonidos pasan por un compresor: empareja la sonoridad percibida entre acciones
-   y evita picos molestos. Los clics llevan un componente de ruido ('k' = noise) porque un
-   transitorio de banda ancha se percibe mucho más presente que un seno a la misma amplitud. */
+/* Todos los sonidos pasan por un limitador con ganancia de compensación: sube el nivel
+   percibido sin recortar y empareja la sonoridad entre acciones. Los clics llevan un
+   componente de ruido ('k' = noise): un transitorio de banda ancha se percibe mucho
+   más presente que un seno a la misma amplitud. */
 const SFX = {
-  tap:    [{ k:'n', f:2200, d:.035, g:.30 }, { t:.005, f:1046, d:.06, g:.22, w:'triangle' }],
-  check:  [{ k:'n', f:3000, d:.03,  g:.26 }, { t:.01,  f:880,  d:.08, g:.34 }, { t:.07, f:1319, d:.14, g:.30 }],
-  undo:   [{ k:'n', f:1500, d:.03,  g:.22 }, { t:.01,  f:659,  d:.08, g:.32 }, { t:.07, f:440,  d:.13, g:.28 }],
-  finish: [{ f:784,  d:.09, g:.34 }, { t:.08, f:988,  d:.09, g:.34 }, { t:.16, f:1319, d:.22, g:.36 }],
-  save:   [{ k:'n', f:2500, d:.03,  g:.24 }, { t:.01,  f:988,  d:.07, g:.32 }, { t:.06, f:1480, d:.13, g:.30 }],
-  warn:   [{ k:'n', f:800,  d:.04,  g:.26 }, { t:.01,  f:220,  d:.17, g:.34, w:'square' }],
-  fold:   [{ k:'n', f:1800, d:.03,  g:.22 }, { t:.01,  f:784,  d:.07, g:.30 }, { t:.06, f:523, d:.12, g:.28 }],
-  unfold: [{ f:523,  d:.06, g:.26 }, { t:.05, f:784,  d:.10, g:.26 }],
-  mark30: [{ f:880,  d:.12, g:.42 }, { t:.15, f:1174, d:.15, g:.42 }],
-  mark10: [{ f:1318, d:.09, g:.48 }, { t:.13, f:1318, d:.11, g:.48 }],
-  alert:  [{ f:1046, d:.15, g:.70 }, { t:.19, f:1046, d:.15, g:.70 }, { t:.38, f:1046, d:.17, g:.70 }]
+  tap:    [{ k:'n', f:2200, d:.05, g:.55 }, { t:.005, f:1046, d:.09, g:.45, w:'triangle' }],
+  check:  [{ k:'n', f:3000, d:.04, g:.50 }, { t:.01,  f:880,  d:.11, g:.75 }, { t:.08, f:1319, d:.18, g:.68 }],
+  undo:   [{ k:'n', f:1500, d:.04, g:.45 }, { t:.01,  f:659,  d:.11, g:.68 }, { t:.08, f:440,  d:.17, g:.60 }],
+  finish: [{ f:784,  d:.12, g:.78 }, { t:.09, f:988,  d:.12, g:.78 }, { t:.18, f:1319, d:.28, g:.85 }],
+  save:   [{ k:'n', f:2500, d:.04, g:.48 }, { t:.01,  f:988,  d:.10, g:.72 }, { t:.07, f:1480, d:.17, g:.66 }],
+  warn:   [{ k:'n', f:800,  d:.05, g:.55 }, { t:.01,  f:220,  d:.22, g:.75, w:'square' }],
+  fold:   [{ k:'n', f:1800, d:.04, g:.45 }, { t:.01,  f:784,  d:.10, g:.66 }, { t:.07, f:523, d:.16, g:.60 }],
+  unfold: [{ f:523,  d:.08, g:.55 }, { t:.06, f:784,  d:.13, g:.55 }],
+  mark30: [{ f:880,  d:.16, g:.90 }, { t:.18, f:1174, d:.20, g:.90 }],
+  mark10: [{ f:1318, d:.12, g:1 }, { t:.15, f:1318, d:.15, g:1 }],
+  alert:  [{ f:1046, d:.20, g:1 }, { t:.24, f:1046, d:.20, g:1 }, { t:.48, f:1046, d:.24, g:1 }]
 };
 
 let master = null, noiseBuf = null;
 function bus(ctx){
   if(master) return master;
   const comp = ctx.createDynamicsCompressor();
-  comp.threshold.value = -16; comp.knee.value = 14; comp.ratio.value = 4;
-  comp.attack.value = .003;   comp.release.value = .12;
+  comp.threshold.value = -16; comp.knee.value = 8; comp.ratio.value = 6;
+  comp.attack.value = .002;   comp.release.value = .1;
+  const makeup = ctx.createGain();
+  makeup.gain.value = 3;      // recupera el nivel que come el limitador
   master = ctx.createGain();
   master.gain.value = 1;
-  master.connect(comp).connect(ctx.destination);
+  master.connect(comp).connect(makeup).connect(ctx.destination);
   return master;
 }
 function noise(ctx){
