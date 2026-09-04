@@ -305,11 +305,11 @@
 
   /* nota en modo lectura */
   .note-view{
-    margin:0 12px 12px;padding:8px 10px;border-radius:11px;
+    margin:0 12px 12px;padding:7px 9px;border-radius:11px;
     background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.24);
-    display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.45;color:var(--txt-2)
+    display:flex;gap:8px;align-items:center;font-size:13px;line-height:1.4;color:var(--txt-2)
   }
-  .note-view .ico{flex:none;font-size:12px;line-height:1.5}
+  .note-view .ico{flex:none;font-size:12px;line-height:1.4;align-self:flex-start;margin-top:2px}
   .note-view .txt{
     flex:1;min-width:0;white-space:pre-wrap;word-break:break-word;
     display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer
@@ -318,8 +318,8 @@
   .note-view .more{display:none;flex:none;font-size:11.5px;font-weight:700;color:#b45309;padding:0 2px}
   :root[data-theme="dark"] .note-view .more{color:#fbbf24}
   .note-view.clamped .more{display:inline-block}
-  .note-view .edit{flex:none;width:26px;height:26px;border-radius:7px;border:1px solid var(--line);
-    display:grid;place-items:center;font-size:11px;color:var(--txt-3);background:var(--bg-2);transition:.15s}
+  .note-view .edit{flex:none;width:22px;height:22px;border-radius:7px;border:1px solid var(--line);
+    display:grid;place-items:center;font-size:10px;color:var(--txt-3);background:var(--bg-2);transition:.15s}
   .note-view .edit:hover{color:var(--txt);border-color:var(--hover-line)}
 
   /* nota en modo edición */
@@ -1018,14 +1018,10 @@ main.addEventListener('click', async ev => {
     const ta = card.querySelector('textarea');
     e.notes = ta.value.trim();
     delete drafts[x.id]; noteOpen.delete(x.id);
-    resetZoom(); ta.blur();
     save(); refresh();
   }
   else if(act === 'note-cancel'){
-    const ta = card.querySelector('textarea');
-    delete drafts[x.id]; noteOpen.delete(x.id);
-    resetZoom(); if(ta) ta.blur();
-    refresh();
+    delete drafts[x.id]; noteOpen.delete(x.id); refresh();
   }
   else if(act === 'note-more'){
     const v = btn.closest('.note-view');
@@ -1058,11 +1054,6 @@ main.addEventListener('change', ev => {
   ev.target.dataset.lv = Math.max(0, BORG.indexOf(ev.target.value) - 1);
   save();
 });
-
-// el bloqueo del viewport debe ocurrir antes de que el toque quite el foco del textarea
-main.addEventListener('pointerdown', ev => {
-  if(ev.target.closest('[data-act="note-save"],[data-act="note-cancel"]')) resetZoom();
-}, true);
 
 function findEx(id){
   for(const d of PROGRAM) for(const b of d.blocks) for(const x of b.ex) if(x.id === id) return x;
@@ -1235,20 +1226,6 @@ function toast(msg){
   const el = document.getElementById('toast');
   el.textContent = msg; el.classList.add('show');
   clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 1600);
-}
-
-// iOS no deshace el zoom al salir de un campo: hay que fijar maximum-scale ANTES del blur
-const VP = document.querySelector('meta[name="viewport"]');
-const VP_BASE = 'width=device-width, initial-scale=1, viewport-fit=cover';
-const VP_LOCK = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
-let vpT1, vpT2;
-
-function resetZoom(){
-  clearTimeout(vpT1); clearTimeout(vpT2);
-  VP.setAttribute('content', VP_LOCK);
-  // segundo intento con un string distinto: si el teclado seguía animando, Safari sí lo reevalúa
-  vpT1 = setTimeout(() => VP.setAttribute('content', VP_LOCK.replace('scale=1,', 'scale=1.0,')), 150);
-  vpT2 = setTimeout(() => VP.setAttribute('content', VP_BASE), 700);
 }
 
 /* =========================================================
