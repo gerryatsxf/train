@@ -220,19 +220,27 @@
     background:var(--ok-fill);color:var(--ok-ink);border:1px solid var(--ok-edge)
   }
 
-  /* reloj de consistencia del descanso */
-  .gauge{width:34px;height:34px;flex:none;padding:0;background:transparent;border:0;align-self:flex-start;--gc:var(--txt-3)}
-  .gauge svg{display:block;width:100%;height:100%}
-  .gauge .trk{fill:none;stroke:var(--track);stroke-width:4}
-  .gauge .band{fill:none;stroke:var(--gc);stroke-width:4;stroke-linecap:round}
-  .gauge .tgt{stroke:var(--txt-2);stroke-width:1.6}
-  .gauge .hand{stroke:var(--gc);stroke-width:1.8;stroke-linecap:round}
-  .gauge .pin{fill:var(--gc)}
-  .gauge.ok{--gc:var(--ok)}
-  .gauge.mid{--gc:var(--warn)}
-  .gauge.bad{--gc:#ef4444}
-  .gauge.empty{opacity:.45}
-  .gauge.empty .trk{stroke-dasharray:3 4}
+  /* mini gráfica de descansos: una barra por serie contra la línea del objetivo */
+  .rstat{
+    width:70px;flex:none;align-self:flex-start;padding:0;background:transparent;border:0;
+    display:grid;gap:3px;justify-items:stretch;--gc:var(--txt-3)
+  }
+  .rstat .avg{font-size:11px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--gc);text-align:left;line-height:1}
+  .rstat .avg em{font-style:normal;font-size:8px;font-weight:700;color:var(--txt-3);margin-left:3px}
+  .rstat .plot{
+    position:relative;height:22px;display:flex;align-items:flex-end;gap:2px;
+    border-bottom:1px solid var(--line)
+  }
+  .rstat .plot::before{
+    content:"";position:absolute;left:0;right:0;bottom:var(--tgt,50%);
+    border-top:1px dashed var(--txt-3);opacity:.7
+  }
+  .rstat .plot i{flex:1;min-width:3px;border-radius:2px 2px 0 0;background:var(--gc);position:relative}
+  .rstat .plot i.none{background:var(--line);height:3px}
+  .rstat.ok{--gc:var(--ok)}
+  .rstat.mid{--gc:var(--warn)}
+  .rstat.bad{--gc:#ef4444}
+  .rstat.empty{opacity:.5}
   .ex-name{flex:1;min-width:0}
   .ex-name h3{margin:0;font-size:15px;font-weight:700;letter-spacing:-.2px;line-height:1.3}
   .exsub,.exdone{
@@ -512,6 +520,11 @@
     font-size:12px;font-weight:700;color:var(--txt-2);font-variant-numeric:tabular-nums
   }
   .chip.sel{border-color:var(--accent);background:rgba(124,92,255,.14);color:var(--txt)}
+  .rest-hint{margin:-6px 0 14px;font-size:11.5px;line-height:1.45;text-align:center;color:var(--txt-3)}
+  .rest-hint.zero{color:#b45309;font-weight:700}
+  :root[data-theme="dark"] .rest-hint.zero{color:#fbbf24}
+  #restSave.zero{background:transparent;border:1px solid rgba(245,158,11,.55);color:#b45309}
+  :root[data-theme="dark"] #restSave.zero{color:#fbbf24}
 </style>
 </head>
 <body>
@@ -627,6 +640,7 @@
     <button class="chip" data-sec="120">2:00</button>
     <button class="chip" data-sec="180">3:00</button>
   </div>
+  <p class="rest-hint" id="restHint"></p>
   <div class="modal-actions">
     <button class="btn danger" id="restClear">Quitar</button>
     <button class="btn" id="restCancel">Cancelar</button>
@@ -746,6 +760,7 @@ let state = defaults();
 let selDay = todayWeekday();
 const noteOpen = new Set();   // ejercicios con el editor de nota abierto
 const openEx = new Set();     // ejercicios completos que siguen desplegados
+const closedEx = new Set();   // plegados a mano aunque no estén completos
 const drafts = {};            // borradores de nota sin guardar
 
 // config.json define los valores por defecto; los ajustes guardados siempre ganan
@@ -995,38 +1010,29 @@ function restStats(e){
   const cv = mean ? sd / mean : 0;
   return { n:vals.length, mean, sd, cv, lv: cv <= .10 ? 'ok' : cv <= .25 ? 'mid' : 'bad' };
 }
-// círculo completo = el doble del objetivo, así la meta cae siempre a las 6 en punto
+// una barra por serie: la altura es el descanso y la línea punteada el objetivo.
+// Barras parejas = constante; barras desiguales = disperso, sin interpretar ángulos.
 function restGauge(e){
   const target = pref('rest') || 60;
+  const vals = e.sets.map(s => s.rest || 0);
   const st = restStats(e);
-  const R = 15, C = 2 * Math.PI * R;
-  const ang = s => Math.max(0, Math.min(359.9, (s / (target * 2)) * 360));
-  const pt = (a, r) => {
-    const t = (a - 90) * Math.PI / 180;
-    return [20 + r * Math.cos(t), 20 + r * Math.sin(t)];
-  };
-  const [tx1, ty1] = pt(180, 10.5), [tx2, ty2] = pt(180, 19);
-  const notch = `<line class="tgt" x1="${tx1.toFixed(1)}" y1="${ty1.toFixed(1)}" x2="${tx2.toFixed(1)}" y2="${ty2.toFixed(1)}"/>`;
-  const track = `<circle class="trk" cx="20" cy="20" r="${R}"/>`;
 
   if(!st){
-    return `<button class="gauge empty" data-act="rest-stats" aria-label="Sin descansos registrados">
-      <svg viewBox="0 0 40 40">${track}${notch}</svg></button>`;
+    return `<button class="rstat empty" data-act="rest-stats" aria-label="Sin descansos registrados">
+      <span class="avg">--:--</span>
+      <span class="plot" style="--tgt:50%">${vals.map(() => '<i class="none"></i>').join('')}</span>
+    </button>`;
   }
 
-  const a0 = ang(st.mean - st.sd), a1 = ang(st.mean + st.sd);
-  const len = C * Math.max(4, a1 - a0) / 360;
-  const [hx, hy] = pt(ang(st.mean), 12);
-  return `<button class="gauge ${st.lv}" data-act="rest-stats" aria-label="Consistencia del descanso">
-    <svg viewBox="0 0 40 40">
-      ${track}
-      <circle class="band" cx="20" cy="20" r="${R}" transform="rotate(-90 20 20)"
-        stroke-dasharray="${len.toFixed(2)} ${(C - len).toFixed(2)}"
-        stroke-dashoffset="${(-C * a0 / 360).toFixed(2)}"/>
-      ${notch}
-      <line class="hand" x1="20" y1="20" x2="${hx.toFixed(1)}" y2="${hy.toFixed(1)}"/>
-      <circle class="pin" cx="20" cy="20" r="2"/>
-    </svg>
+  const top = Math.max(target, ...vals) * 1.15;
+  const bars = vals.map(v => v > 0
+    ? `<i style="height:${Math.max(8, v / top * 100).toFixed(1)}%"></i>`
+    : '<i class="none"></i>').join('');
+  const sd = Math.round(st.sd);
+  return `<button class="rstat ${st.lv}" data-act="rest-stats"
+      aria-label="Descanso promedio ${fmtDur(Math.round(st.mean))}, variación ${sd} segundos">
+    <span class="avg">${fmtDur(Math.round(st.mean))}<em>±${sd < 60 ? sd + 's' : fmtDur(sd)}</em></span>
+    <span class="plot" style="--tgt:${(target / top * 100).toFixed(1)}%">${bars}</span>
   </button>`;
 }
 
@@ -1038,7 +1044,7 @@ function exCard(x){
   const editing = noteOpen.has(x.id);
   const draft = drafts[x.id] !== undefined ? drafts[x.id] : e.notes;
   const lv = Math.max(0, BORG.indexOf(e.borg || '') - 1);
-  const collapsed = allDone && !openEx.has(x.id);
+  const collapsed = closedEx.has(x.id) || (allDone && !openEx.has(x.id));
 
   const sets = e.sets.map((s, i) => {
     const ph = i > 0 ? (e.sets[i-1].w || '') : '';
@@ -1062,8 +1068,8 @@ function exCard(x){
   }).join('');
 
   return `<article class="ex ${allDone?'done':''} ${collapsed?'collapsed':''}" data-ex="${x.id}">
-    <div class="ex-top" ${allDone ? 'data-act="toggle-ex"' : ''}>
-      ${restGauge(e)}
+    <div class="ex-top" data-act="toggle-ex">
+      ${allDone ? '<span class="tick">✓</span>' : ''}
       <div class="ex-name">
         <h3>${esc(x.name)}</h3>
         <div class="exsub">
@@ -1073,7 +1079,8 @@ function exCard(x){
         </div>
         ${allDone ? `<div class="exdone">${esc(doneSummary(e, x))}${e.notes.trim() ? ' · 📝' : ''}</div>` : ''}
       </div>
-      ${allDone ? '<span class="tick">✓</span><span class="chev">›</span>' : ''}
+      ${restGauge(e)}
+      <span class="chev">›</span>
     </div>
 
     <div class="fold"><div class="inner">
@@ -1166,7 +1173,7 @@ main.addEventListener('click', async ev => {
       if(!e.sets[i].r) e.sets[i].r = /^\d+$/.test(x.reps) ? x.reps : '';
       if(pref('autoTimer')) startTimer(pref('rest'), { exId:x.id, i, week:state.week });
       const full = e.sets.every(s => s.d);
-      if(full) openEx.add(x.id);   // se pliega después, no al instante
+      if(full){ openEx.add(x.id); closedEx.delete(x.id); }   // se pliega después, no al instante
       sfx(full ? 'finish' : 'check');
       buzz(full ? [30,50,30] : [35]);
     } else {
@@ -1181,7 +1188,8 @@ main.addEventListener('click', async ev => {
   }
   else if(act === 'toggle-ex'){
     const willCollapse = !card.classList.contains('collapsed');
-    if(willCollapse) openEx.delete(x.id); else openEx.add(x.id);
+    if(willCollapse){ openEx.delete(x.id); closedEx.add(x.id); }
+    else { openEx.add(x.id); closedEx.delete(x.id); }
     cancelCollapse(card);
     card.classList.toggle('collapsed', willCollapse);
     sfx(willCollapse ? 'fold' : 'unfold');
@@ -1422,6 +1430,7 @@ function openRestEdit(x, i){
   restTarget = { exId:x.id, i, week:state.week };
   document.getElementById('restTitle').textContent = `Descanso · S${i+1}`;
   document.getElementById('restWho').textContent = x.name;
+  document.getElementById('restClear').disabled = !(e.sets[i].rest > 0);
   fillRestFields(e.sets[i].rest || 0);
   restModal.classList.add('show'); restBg.classList.add('show');
 }
@@ -1432,20 +1441,31 @@ function closeRestEdit(){
 function fillRestFields(sec){
   restMin.value = Math.floor(sec/60);
   restSec.value = String(sec % 60).padStart(2,'0');
-  markRestChip(sec);
+  syncRestUI(sec);
 }
 function readRestFields(){
   const clamp = v => Math.max(0, Math.min(59, parseInt(v, 10) || 0));
   return clamp(restMin.value) * 60 + clamp(restSec.value);
 }
-function markRestChip(sec){
+// 0:00 no es "guardar sin cambios": deja la serie sin descanso, así que el botón lo advierte
+function syncRestUI(sec){
+  const zero = sec === 0;
+  const save = document.getElementById('restSave');
+  const hint = document.getElementById('restHint');
+  save.textContent = zero ? 'Dejar sin descanso' : 'Guardar ' + fmtDur(sec);
+  save.classList.toggle('zero', zero);
+  save.classList.toggle('primary', !zero);
+  hint.classList.toggle('zero', zero);
+  hint.textContent = zero
+    ? '⚠︎ Con 0:00 la serie queda SIN descanso registrado'
+    : `Se guardará ${fmtDur(sec)} como descanso de S${restTarget ? restTarget.i + 1 : ''}`;
   document.querySelectorAll('#restChips .chip').forEach(c => c.classList.toggle('sel', +c.dataset.sec === sec));
 }
 document.getElementById('restChips').onclick = ev => {
   const c = ev.target.closest('.chip'); if(!c) return;
   fillRestFields(+c.dataset.sec);
 };
-[restMin, restSec].forEach(el => el.addEventListener('input', () => markRestChip(readRestFields())));
+[restMin, restSec].forEach(el => el.addEventListener('input', () => syncRestUI(readRestFields())));
 document.getElementById('restSave').onclick = () => {
   const t = restTarget; const sec = readRestFields();
   closeRestEdit(); if(t) saveSetRest(t, sec);
@@ -1481,7 +1501,7 @@ function audio(){
       actx = new Ctx();
     }
     setAudioSession();
-    if(actx.state === 'suspended') actx.resume();
+    if(actx.state !== 'running') actx.resume();   // 'suspended' y el 'interrupted' de WebKit
     return actx;
   }catch(e){ return null; }
 }
@@ -1503,18 +1523,33 @@ function unlockAudio(){
   src.connect(ctx.destination);
   src.start(0);
 }
+/* Tras un bloqueo largo WebKit deja el contexto inservible aunque diga 'running':
+   ningún resume() lo revive, así que se destruye y se crea uno nuevo dentro de un gesto. */
+let needsAudioReset = false, hiddenAt = Date.now();
+function resetAudio(){
+  needsAudioReset = false;
+  try{ if(actx) actx.close(); }catch(e){}
+  actx = null; master = null; noiseBuf = null; keepAlive = null;
+  alarmNodes = []; alarmArmed = false;
+  if(!audio()) return;
+  unlockAudio();
+  if(tInt) armAlarm(Math.max(0, (tEndAt - Date.now()) / 1000));
+}
+document.addEventListener('pointerdown', () => {
+  if(needsAudioReset) resetAudio(); else audio();
+}, { passive:true, capture:true });
+
 ['pointerdown','touchend','click'].forEach(t =>
   document.addEventListener(t, unlockAudio, { once:true, passive:true }));
 document.addEventListener('visibilitychange', () => {
   if(document.visibilityState !== 'visible'){
+    hiddenAt = Date.now();
     if(!tInt) disarmAlarm();               // al ocultarse sin descanso activo no debe quedar nada
     return;
   }
-  const ctx = audio();                     // reaplica la categoría si iOS la reinició
-  // tras el bloqueo, resume() fuera de un gesto no siempre restaura el audio en iOS
-  if(ctx && ctx.state !== 'running'){
-    document.addEventListener('pointerdown', () => { try{ ctx.resume(); }catch(e){} }, { once:true, passive:true });
-  }
+  // el audio se rehace en el próximo toque: crearlo fuera de un gesto no sirve en iOS
+  if(Date.now() - hiddenAt > 30000 || !actx || actx.state !== 'running') needsAudioReset = true;
+  audio();                                 // reaplica la categoría si iOS la reinició
   pruneStaleAlarm();
   if(tInt) tick();
   else disarmAlarm();                      // sin descanso activo no debe quedar nada agendado
