@@ -1,10 +1,11 @@
 {
   "$comment": "Valores por defecto de la experiencia. Solo aplican a dispositivos sin ajustes guardados; lo que el usuario cambie en Ajustes tiene prioridad. Sube 'version' en cada deploy para que la app se recargue sola con la build nueva.",
-  "version": "2026-09-03.33",
+  "version": "2026-09-04.12",
   "theme": "dark",
   "autoTimer": true,
   "restSeconds": 60,
   "restEndPopup": true,
   "sounds": true,
+  "tickSound": false,
   "lockedAlarm": true
 }

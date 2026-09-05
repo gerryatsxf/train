@@ -35,6 +35,7 @@
     --radius-sm:10px;
     --shadow:0 10px 30px rgba(0,0,0,.35);
     --safe-b:env(safe-area-inset-bottom,0px);
+    --safe-t:env(safe-area-inset-top,0px);
     --glass:rgba(21,29,43,.94);
     --scrim:rgba(3,6,12,.7);
     --hover-line:#33415c;
@@ -87,11 +88,12 @@
   button,input,select,textarea{font:inherit;color:inherit}
   button{cursor:pointer;border:0;background:none}
 
-  .wrap{width:100%;padding:0 12px}
+  .wrap{width:100%;padding:0 max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left))}
 
   /* ---------- HEADER ---------- */
   header{
     position:sticky;top:0;z-index:30;
+    padding-top:var(--safe-t);
     background:var(--glass);
     backdrop-filter:saturate(160%) blur(14px);
     -webkit-backdrop-filter:saturate(160%) blur(14px);
@@ -104,12 +106,14 @@
   /* barra compacta fija del día */
   .pinbar{
     position:fixed;top:0;left:0;right:0;z-index:25;
+    padding-top:var(--safe-t);
     background:var(--card);
     border-bottom:1px solid var(--line);box-shadow:var(--shadow);
     transform:translateY(-110%);transition:transform .24s ease;will-change:transform
   }
   .pinbar.show{transform:translateY(0)}
-  body:not(.nav-hidden) .pinbar.show{transform:translateY(var(--head-h))}
+  /* con la barra de navegación visible sobra: apilarlas comía media pantalla */
+  body:not(.nav-hidden) .pinbar.show{transform:translateY(-110%)}
   .pinbar .wrap{display:flex;align-items:center;gap:10px;height:42px}
   .pinbar .ttl{flex:1;min-width:0;font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .pinbar .ser{font-size:12px;font-weight:700;color:var(--txt-2);font-variant-numeric:tabular-nums}
@@ -386,7 +390,7 @@
   .note-edit{padding:0 12px 12px}
   .note-edit textarea{
     width:100%;min-height:58px;resize:vertical;border-radius:11px;border:1px solid var(--line);
-    background:var(--bg-2);padding:9px 11px;font-size:13.5px;outline:none;line-height:1.45
+    background:var(--bg-2);padding:9px 11px;font-size:16px;outline:none;line-height:1.45
   }
   .note-edit textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,92,255,.15)}
   .note-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:7px}
@@ -420,7 +424,7 @@
   .btn.solid-danger:hover{filter:brightness(1.06);color:#fff}
 
   .timer{
-    position:fixed;right:14px;bottom:calc(14px + var(--safe-b));z-index:50;
+    position:fixed;right:max(14px,env(safe-area-inset-right));bottom:calc(14px + var(--safe-b));z-index:50;
     display:none;align-items:center;gap:10px;padding:9px 10px 9px 14px;border-radius:99px;
     backdrop-filter:blur(12px);border:1px solid var(--line);box-shadow:var(--shadow);
     /* espera (> 30 s) */
@@ -603,6 +607,10 @@
     <div class="switch" id="swSound"><i></i></div>
   </div>
   <div class="row">
+    <p>Tic-tac<small>Clic discreto en cada segundo del descanso</small></p>
+    <div class="switch" id="swTicks"><i></i></div>
+  </div>
+  <div class="row" id="rowBg">
     <p>Alarma con pantalla bloqueada<small>Volumen multimedia y audio activo durante el descanso; pausa la música de otras apps. Apagado: convive con la música, pero iOS puede enmudecer la alarma</small></p>
     <div class="switch" id="swBg"><i></i></div>
   </div>
@@ -751,12 +759,12 @@ const TOTAL_WEEKS = 16;
    ESTADO / PERSISTENCIA
    ========================================================= */
 const KEY = 'train.gm.v1';
-const FALLBACK_CFG = { theme:'dark', autoTimer:true, restSeconds:60, restEndPopup:true, sounds:true, lockedAlarm:true };
+const FALLBACK_CFG = { theme:'dark', autoTimer:true, restSeconds:60, restEndPopup:true, sounds:true, lockedAlarm:true, tickSound:false };
 let CONFIG = FALLBACK_CFG;
 const defaults = () => ({ start:isoMonday(new Date()), week:1, prefs:{}, log:{} });
 
 // prefs solo guarda lo que el usuario cambió a mano; el resto viene de config.json
-const CFG_OF = { theme:'theme', autoTimer:'autoTimer', rest:'restSeconds', endAlert:'restEndPopup', sounds:'sounds', bgAlarm:'lockedAlarm' };
+const CFG_OF = { theme:'theme', autoTimer:'autoTimer', rest:'restSeconds', endAlert:'restEndPopup', sounds:'sounds', bgAlarm:'lockedAlarm', ticks:'tickSound' };
 function pref(k){
   return state.prefs[k] !== undefined ? state.prefs[k] : CONFIG[CFG_OF[k]];
 }
@@ -783,6 +791,7 @@ async function loadConfig(){
       restEndPopup: j.restEndPopup !== false,
       sounds: j.sounds !== false,
       lockedAlarm: j.lockedAlarm !== false,
+      tickSound: j.tickSound === true,
       restSeconds: [30,45,60,90,120,180].includes(rest) ? rest : FALLBACK_CFG.restSeconds
     };
   }catch(e){
@@ -1181,9 +1190,9 @@ main.addEventListener('click', async ev => {
       const full = e.sets.every(s => s.d);
       if(full){ openEx.add(x.id); closedEx.delete(x.id); }   // se pliega después, no al instante
       sfx(full ? 'finish' : 'check');
-      buzz(full ? [30,50,30] : [35]);
+      buzz(full ? 'done' : 'tap');
     } else {
-      sfx('undo'); buzz([25]);
+      sfx('undo'); buzz('tap');
       openEx.delete(x.id);
       if(tInt){                      // desmarcar invalida el descanso en curso, sea cual sea
         stopTimer();
@@ -1286,6 +1295,7 @@ function findEx(id){
 const tEl = document.getElementById('timer'), tTxt = document.getElementById('timerTxt');
 const HOT_AT = 30;
 let tLeft = 0, tInt = null, tStartAt = 0, tEndAt = 0;
+let tickAt = 0, tickWall = 0, tickOdd = 0;
 let timerSet = null;   // serie que arrancó el descanso en curso
 
 function fmtDur(sec){
@@ -1298,18 +1308,59 @@ function startTimer(sec, target){
   tEl.classList.add('show');
   clearInterval(tInt);
   armAlarm(sec);
+  startLiveActivity(sec, target);
+  primeTicks();
   tick(); markTimingSet();
   tInt = setInterval(tick, 250);
+}
+// tarjeta en la pantalla bloqueada y la Isla Dinámica; cuenta sola con la fecha de fin
+function startLiveActivity(sec, target){
+  const LA = plug('LiveActivity');
+  if(!LA) return;
+  const ex = target ? findEx(target.exId) : null;
+  LA.start({
+    seconds: sec,
+    exercise: ex ? ex.name : 'Descanso',
+    set: target ? 'S' + (target.i + 1) : ''
+  }).catch(() => {});
+}
+function stopLiveActivity(){
+  const LA = plug('LiveActivity');
+  if(LA) LA.stop().catch(() => {});
+}
+/* El tic-tac se agenda contra el reloj de audio, no contra el intervalo: si el hilo
+   principal se atasca (render, scroll) el intervalo se retrasa y el ritmo se oye lento. */
+function primeTicks(){
+  tickAt = tickWall = 0;
+  const ctx = actx;
+  if(!ctx || ctx.state !== 'running') return;
+  const ms = (tEndAt - Date.now()) % 1000;   // alineado al cambio de dígito del contador
+  tickWall = Date.now() + ms;
+  tickAt = ctx.currentTime + ms / 1000;
+  tickOdd = Math.round((tEndAt - tickWall) / 1000) % 2;
+}
+function scheduleTicks(){
+  const ctx = actx;
+  if(!ctx || ctx.state !== 'running') return;
+  if(!tickAt || tickAt < ctx.currentTime - 2) primeTicks();
+  if(!tickAt) return;
+  while(tickAt < ctx.currentTime + .4){
+    if(tickWall < tEndAt - 200) sfx(tickOdd ? 'tick' : 'tock', tickAt);
+    tickAt += 1; tickWall += 1000; tickOdd ^= 1;
+  }
 }
 // el conteo se deriva del reloj: iOS congela los intervalos con la pantalla bloqueada
 function tick(){
   pruneStaleAlarm();
+  const native = !!plug('NativeSound');
+  const ticking = pref('ticks');
+  if(!native && ticking) scheduleTicks();
   const prev = tLeft;
   const left = Math.max(0, Math.ceil((tEndAt - Date.now()) / 1000));
   if(left !== tLeft){
     tLeft = left; paint();
     if(left > 0){
-      sfx(left % 2 ? 'tick' : 'tock');
+      if(native && ticking) sfx(left % 2 ? 'tick' : 'tock');
       cueCrossing(prev, left);
     }
   }
@@ -1319,13 +1370,13 @@ function tick(){
     if(alreadyRang) releaseAlarm();  // ya está sonando: se deja terminar
     stopTimer(true);                 // si no sonó, disarmAlarm() mata los nodos agendados
     if(!alreadyRang) sfx('alert');
-    buzz(); restEnded(elapsed);
+    buzz('strong'); restEnded(elapsed);
   }
 }
 // avisos al cruzar los umbrales; si se saltan varios de golpe suena solo el más urgente
 function cueCrossing(prev, left){
-  if(prev > 10 && left <= 10){ sfx('mark10'); buzz([60,40,60]); }
-  else if(prev > HOT_AT && left <= HOT_AT){ sfx('mark30'); buzz([45]); }
+  if(prev > 10 && left <= 10){ sfx('mark10'); buzz('warn'); }
+  else if(prev > HOT_AT && left <= HOT_AT){ sfx('mark30'); buzz('tap'); }
 }
 function paint(){
   const m = Math.floor(tLeft/60), s = tLeft % 60;
@@ -1334,9 +1385,10 @@ function paint(){
 }
 function stopTimer(keepTarget){
   clearInterval(tInt); tInt = null;
-  tLeft = 0; tEndAt = 0;
+  tLeft = 0; tEndAt = 0; tickAt = 0;
   tEl.classList.remove('show','hot');
   disarmAlarm();
+  stopLiveActivity();
   if(!keepTarget){ timerSet = null; markTimingSet(); }
 }
 // resalta en la tarjeta la serie a la que pertenece el descanso activo
@@ -1494,6 +1546,7 @@ document.getElementById('timerStop').onclick = () => {
 document.getElementById('timerAdd').onclick = () => {
   tEndAt += 30000;
   armAlarm(Math.max(0, (tEndAt - Date.now()) / 1000));
+  startLiveActivity(Math.max(0, (tEndAt - Date.now()) / 1000), timerSet);
   tick();
 };
 
@@ -1503,6 +1556,7 @@ document.getElementById('timerAdd').onclick = () => {
 let actx = null;
 // iOS solo habilita el contexto dentro de un gesto real y lo suspende al volver del bloqueo
 function audio(){
+  if(plug('NativeSound')) return null;   // en nativo no se crea: tocarlo haría que WebKit tome la sesión
   try{
     if(!actx){
       const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -1514,10 +1568,9 @@ function audio(){
     return actx;
   }catch(e){ return null; }
 }
-/* 'playback' sobrevive al bloqueo y usa el volumen multimedia, pero se adueña de la sesión;
-   'transient' convive con la música de otras apps, aunque iOS la desactiva tras un rato en
-   segundo plano. Se elige según el ajuste y solo se reasigna cuando cambia: reasignarla
-   en cada sonido corta el audio en curso. */
+/* 'playback' suena siempre pero se adueña de la sesión y expulsa a otras apps; 'transient'
+   se mezcla, pero el switch de silencio lo enmudece. Solo aplica cuando el audio lo produce
+   WebKit: con el plugin nativo la sesión la fija AVAudioSession y esto no se usa. */
 function setAudioSession(){
   const s = navigator.audioSession;
   if(!s) return;
@@ -1636,6 +1689,13 @@ function playSfx(ctx, name, base){
 }
 function sfx(name, at){
   if(!pref('sounds')) return [];
+  // en la app nativa suena por AVAudioEngine: WebKit nunca toca la sesión de audio
+  const NS = plug('NativeSound');
+  if(NS){
+    if(at !== undefined) return [];   // lo agendado lo cubre la notificación local
+    NS.play({ parts: SFX[name] || [] }).catch(() => {});
+    return [];
+  }
   const ctx = audio();
   if(!ctx) return [];
   if(ctx.state === 'running') return playSfx(ctx, name, at !== undefined ? at : ctx.currentTime);
@@ -1648,18 +1708,89 @@ function sfx(name, at){
   }).catch(() => {});
   return [];
 }
-function buzz(pattern){
-  if(pref('sounds') && navigator.vibrate) navigator.vibrate(pattern || [120,60,120]);
+// nombres explícitos: en iOS son hápticos, en navegador patrones de vibración
+const BUZZ = {
+  tap:    { kind:'light',   web:[25] },
+  done:   { kind:'success', web:[30,60,30] },
+  warn:   { kind:'warning', web:[70,50,70] },
+  strong: { kind:'strong',  web:[250,90,250,90,350] }
+};
+function buzz(name){
+  if(!pref('sounds')) return;
+  const b = BUZZ[name] || BUZZ.tap;
+  const NS = plug('NativeSound');
+  if(NS){ NS.haptic({ kind:b.kind }).catch(() => {}); return; }
+  if(navigator.vibrate) navigator.vibrate(b.web);
 }
 
 /* ---- alarma con la pantalla bloqueada ----
-   iOS suspende el JS al bloquear, pero no el audio: la alarma se agenda por adelantado
-   en la línea de tiempo del AudioContext. El tono de mantenimiento es opcional porque
-   ocupa la sesión de audio de forma continua y detiene la música de otras apps. */
+   En la app nativa la dispara una notificación local: el sistema la lanza aunque iOS haya
+   congelado el JS, sin tener que mantener ocupada la sesión de audio. En el navegador se
+   agenda por adelantado en la línea de tiempo del AudioContext. */
+
+// se consultan en cada uso: los plugins pueden registrarse después de que corre este script
+function plug(name){
+  const P = window.Capacitor && window.Capacitor.Plugins;
+  return (P && P[name]) || null;
+}
+const REST_NOTIF = 8801;
+const WARN_NOTIF = 8802;
+let notifOk = null;
+
+async function notifAllowed(){
+  const LN = plug('LocalNotifications');
+  if(!LN) return false;
+  if(notifOk !== null) return notifOk;
+  try{
+    let p = await LN.checkPermissions();
+    if(p.display !== 'granted') p = await LN.requestPermissions();
+    notifOk = p.display === 'granted';
+  }catch(e){ notifOk = false; }
+  return notifOk;
+}
+// con la pantalla bloqueada el JS está congelado: la vibración solo puede venir del sistema,
+// así que el aviso de los 10 s también se programa como notificación
+async function scheduleRestNotif(seconds, target){
+  const LN = plug('LocalNotifications');
+  if(!LN || !(await notifAllowed())) return;
+  const ex = target ? findEx(target.exId) : null;
+  const who = ex ? `${ex.name}${target ? ' · S' + (target.i + 1) : ''}` : 'Siguiente serie';
+  const list = [{
+    id: REST_NOTIF,
+    title: '⏰ Descanso terminado',
+    body: who,
+    schedule: { at: new Date(Date.now() + seconds * 1000), allowWhileIdle: true },
+    sound: 'default'
+  }];
+  if(seconds > 13){
+    list.push({
+      id: WARN_NOTIF,
+      title: '⏱ Faltan 10 segundos',
+      body: who,
+      schedule: { at: new Date(Date.now() + (seconds - 10) * 1000), allowWhileIdle: true },
+      sound: 'default'
+    });
+  }
+  try{
+    await LN.cancel({ notifications:[{ id:REST_NOTIF }, { id:WARN_NOTIF }] });
+    await LN.schedule({ notifications: list });
+  }catch(e){}
+}
+function cancelRestNotif(){
+  const LN = plug('LocalNotifications');
+  if(!LN) return;
+  const ids = [{ id:REST_NOTIF }, { id:WARN_NOTIF }];
+  try{
+    LN.cancel({ notifications:ids });
+    if(LN.removeDeliveredNotifications) LN.removeDeliveredNotifications({ notifications:ids });
+  }catch(e){}
+}
+
 let alarmNodes = [], alarmArmed = false, alarmAt = 0, alarmWallAt = 0, keepAlive = null;
 
 function armAlarm(seconds){
   disarmAlarm();
+  if(plug('LocalNotifications')){ scheduleRestNotif(seconds, timerSet); return; }
   const ctx = audio();
   if(!ctx || ctx.state !== 'running' || !pref('sounds')) return;
   alarmAt = ctx.currentTime + seconds;
@@ -1676,8 +1807,8 @@ function alarmDidRing(){
 function pruneStaleAlarm(){
   if(alarmArmed && Date.now() > alarmWallAt + 3000 && !alarmDidRing()) disarmAlarm();
 }
-// Safari no siempre respeta stop() en un nodo agendado a futuro: además se silencia y desconecta
 function disarmAlarm(){
+  cancelRestNotif();
   alarmNodes.forEach(n => {
     try{ n.g.gain.cancelScheduledValues(0); n.g.gain.value = 0; }catch(e){}
     try{ n.src.stop(0); }catch(e){}
@@ -1720,12 +1851,13 @@ document.addEventListener('click', ev => {
 const sheet = document.getElementById('sheet'), sheetBg = document.getElementById('sheetBg');
 const swTimer = document.getElementById('swTimer'), restSel = document.getElementById('restSel');
 const swAlert = document.getElementById('swAlert'), swSound = document.getElementById('swSound');
-const swBg = document.getElementById('swBg');
+const swBg = document.getElementById('swBg'), swTicks = document.getElementById('swTicks');
 
 function openSheet(){
   swTimer.classList.toggle('on', !!pref('autoTimer'));
   swAlert.classList.toggle('on', !!pref('endAlert'));
   swSound.classList.toggle('on', !!pref('sounds'));
+  swTicks.classList.toggle('on', !!pref('ticks'));
   swBg.classList.toggle('on', !!pref('bgAlarm'));
   restSel.value = String(pref('rest'));
   sheet.classList.add('show'); sheetBg.classList.add('show');
@@ -1742,6 +1874,12 @@ swSound.onclick = () => {
   swSound.classList.toggle('on', v);
   if(v){ sfx('save'); if(tInt) armAlarm(Math.max(0, (tEndAt - Date.now()) / 1000)); }
   else disarmAlarm();
+};
+swTicks.onclick = () => {
+  const v = !pref('ticks');
+  setPref('ticks', v);
+  swTicks.classList.toggle('on', v);
+  if(v) sfx('tick');
 };
 swBg.onclick = () => {
   const v = !pref('bgAlarm');
@@ -1823,7 +1961,8 @@ document.getElementById('btnReload').onclick = forceRefresh;
 /* ---- navegación que se oculta + barra fija del día ---- */
 const headerEl = document.querySelector('header');
 const pinbar = document.getElementById('pinbar');
-let navHidden = false, pinAt = Infinity, lastY = 0, ticking = false;
+let navHidden = false, pinAt = Infinity, ticking = false;
+const TOP_ZONE = 12;
 
 function measureHeader(){
   document.documentElement.style.setProperty('--head-h', headerEl.offsetHeight + 'px');
@@ -1849,13 +1988,7 @@ function setNav(hidden){
 }
 function onScroll(){
   const y = Math.max(0, scrollY);
-  const dy = y - lastY;
-  if(Math.abs(dy) >= 8){
-    if(dy > 0 && y > pinAt) setNav(true);
-    else if(dy < 0) setNav(false);
-    lastY = y;
-  }
-  if(y <= 4) setNav(false);
+  setNav(y > TOP_ZONE);                       // la navegación solo existe arriba del todo
   pinbar.classList.toggle('show', y > pinAt);
 }
 addEventListener('scroll', () => {
@@ -1886,9 +2019,9 @@ function toast(msg){
     selDay = next.weekday;
   }
   applyTheme();
+  if(plug('LocalNotifications')) document.getElementById('rowBg').hidden = true;
   refresh();
   measureHeader();
-  lastY = scrollY;
   onScroll();
   document.getElementById('appVer').textContent = 'Versión ' + (CONFIG.version || 'local');
   save(1);

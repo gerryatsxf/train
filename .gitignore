@@ -1,0 +1,22 @@
+# Dependencias
+node_modules/
+
+# Salida generada por `pnpm run sync`: copia de index.html y config.json
+www/
+
+# Activos web que Capacitor copia al bundle nativo
+ios/App/App/public/
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+DerivedData/
+build/
+
+# CocoaPods (por si se migra desde SPM)
+ios/App/Pods/
+ios/App/Podfile.lock
+
+# macOS
+.DS_Store
