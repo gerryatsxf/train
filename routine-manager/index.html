@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Gestor de rutinas</title>
+<style>
+  :root{
+    --bg:#0b0f16; --card:#151d2b; --card-2:#1b2434; --line:#243046; --line-soft:#1c2537;
+    --txt:#e8edf7; --txt-2:#9aa8c0; --txt-3:#66748f;
+    --accent:#7c5cff; --accent-2:#22d3ee; --ok:#22c55e; --danger:#ef4444;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--bg);color:var(--txt);font-size:14px;line-height:1.45;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Arial,sans-serif;
+    display:grid;grid-template-columns:280px 1fr;height:100vh;overflow:hidden
+  }
+  button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+  input,select{font:inherit;color:inherit}
+
+  aside{border-right:1px solid var(--line);padding:16px;overflow-y:auto;background:var(--card)}
+  aside h1{font-size:15px;margin:0 0 4px}
+  aside .hint{font-size:11.5px;color:var(--txt-3);margin:0 0 14px}
+  .rt{
+    width:100%;text-align:left;padding:10px 11px;border-radius:10px;margin-bottom:7px;
+    background:var(--card-2);border:1px solid var(--line);transition:.15s
+  }
+  .rt:hover{border-color:var(--accent)}
+  .rt.on{border-color:var(--accent);background:#1d2338}
+  .rt b{display:block;font-size:13px}
+  .rt small{display:block;font-size:11px;color:var(--txt-3);margin-top:2px}
+
+  main{overflow-y:auto;padding:20px 22px 60px}
+  .bar{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+  .bar h2{font-size:16px;margin:0;flex:1;min-width:120px}
+
+  .btn{
+    padding:8px 14px;border-radius:9px;background:var(--card-2);border:1px solid var(--line);
+    font-size:13px;font-weight:600;transition:.15s
+  }
+  .btn:hover{border-color:var(--accent)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.sm{padding:5px 9px;font-size:12px}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+
+  /* borrar dia y borrar bloque van con texto: el icono suelto no decía qué se elimina */
+  .quitar{color:var(--danger);border-color:rgba(239,68,68,.26);background:transparent}
+  .quitar:hover{border-color:var(--danger);background:rgba(239,68,68,.1)}
+  /* cuadrados iguales para que la fila quede alineada */
+  .ico{
+    width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:none;
+    background:var(--card-2);border:1px solid var(--line);color:var(--txt-2);
+    font-size:13px;line-height:1;transition:.15s
+  }
+  .ico:hover:not(:disabled){color:var(--txt);border-color:var(--accent)}
+  .ico:disabled{opacity:.3;cursor:not-allowed}
+  .x{
+    width:28px;height:28px;border-radius:8px;display:grid;place-items:center;
+    border:1px solid transparent;color:var(--txt-3);font-size:17px;line-height:1;transition:.15s
+  }
+  .x:hover{color:var(--danger);border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.08)}
+
+  .fila{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  label.f{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--txt-3)}
+  input,select{
+    background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:7px 9px;font-size:13px;outline:none;transition:.15s;min-width:0
+  }
+  input:focus,select:focus{border-color:var(--accent)}
+  input.w-xs{width:64px} input.w-s{width:96px} input.w-m{width:150px} input.w-l{width:230px}
+
+  .dia{border:1px solid var(--line);border-radius:12px;margin-bottom:14px;background:var(--card)}
+  .dia-hd{display:flex;align-items:center;gap:10px;padding:12px 14px;flex-wrap:wrap}
+  .dia.abierto .dia-hd{border-bottom:1px solid var(--line-soft)}
+  .dia-hd .num{font-size:12px;font-weight:800;color:var(--accent-2)}
+  .dia-hd .sp{margin-left:auto;display:flex;gap:6px;align-items:center}
+  .dia-hd label.f{align-self:flex-end}
+  .dia-bd{padding:12px 14px}
+  .dia:not(.abierto) .dia-bd{display:none}
+  .chev{transition:transform .15s}
+  .dia.abierto .chev,.bloque.abierto > .bloque-hd > .chev{transform:rotate(90deg)}
+  .resumen{font-size:11.5px;color:var(--txt-3)}
+  .bloque{border:1px solid var(--line-soft);border-radius:10px;padding:10px 12px;margin-bottom:10px;background:var(--card-2)}
+  .bloque-hd{display:flex;align-items:center;gap:10px;margin-bottom:9px;flex-wrap:wrap}
+  .bloque-hd label.f{align-self:flex-end}
+  .bloque-hd .sp{margin-left:auto}
+  /* plegado: el contenido se oculta pero sigue en el DOM, así que se guarda igual */
+  .bloque:not(.abierto) .bloque-bd{display:none}
+  .bloque:not(.abierto) .bloque-hd{margin-bottom:0}
+  .chk{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt-2);padding-bottom:7px}
+  .tag{
+    font-size:11px;font-weight:600;color:var(--txt-3);padding:4px 9px;border-radius:99px;
+    border:1px solid var(--line);align-self:center
+  }
+  .tag.on{color:var(--accent-2);border-color:rgba(34,211,238,.35)}
+
+  table{width:100%;border-collapse:collapse}
+  th{font-size:10.5px;color:var(--txt-3);text-align:left;font-weight:600;padding:0 5px 5px}
+  td{padding:3px 5px 3px 0;vertical-align:middle}
+  td input,td select{width:100%}
+  .col-x{width:36px;padding-right:0;text-align:center}
+
+  .vacio{color:var(--txt-3);text-align:center;padding:60px 20px}
+  #aviso{
+    position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(8px);
+    background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:9px 16px;font-size:13px;opacity:0;pointer-events:none;transition:.2s
+  }
+  #aviso.show{opacity:1;transform:translateX(-50%)}
+  #aviso.err{border-color:var(--danger);color:#fca5a5}
+</style>
+</head>
+<body>
+
+<aside>
+  <h1>Rutinas</h1>
+  <p class="hint">Se guardan en <code>routines/</code></p>
+  <div id="lista"></div>
+  <button class="btn primary" id="nueva" style="width:100%;margin-top:10px">＋ Nueva rutina</button>
+</aside>
+
+<main id="main">
+  <div class="vacio">Elige una rutina o crea una nueva.</div>
+</main>
+
+<div id="aviso"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+let RUTINA = null;     // rutina en edición
+let ARCHIVO = '';      // nombre del archivo
+let NUEVA = false;
+
+const api = async (url, opts) => {
+  const r = await fetch(url, opts);
+  const j = await r.json().catch(() => ({}));
+  if(!r.ok) throw new Error(j.error || ('Error ' + r.status));
+  return j;
+};
+const esc = s => String(s == null ? '' : s)
+  .replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// los identificadores viajan en el JSON y se usan como clave del registro
+const slug = s => String(s || '').toLowerCase().normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-')
+  .replace(/^-+|-+$/g, '').slice(0, 48);
+
+let avisoT;
+function aviso(msg, err){
+  const el = $('#aviso');
+  el.textContent = msg;
+  el.className = 'show' + (err ? ' err' : '');
+  clearTimeout(avisoT);
+  avisoT = setTimeout(() => el.className = '', err ? 4000 : 2000);
+}
+
+/* ---------- lista ---------- */
+async function cargarLista(){
+  const { items } = await api('/api/routines');
+  $('#lista').innerHTML = items.map(r => `
+    <button class="rt ${r.file === ARCHIVO ? 'on' : ''}" data-f="${esc(r.file)}">
+      <b>${esc(r.name)}</b>
+      <small>${r.weeks} semanas · ${r.days} días · ${r.ex} ejercicios</small>
+      <small>${esc(r.file)}</small>
+    </button>`).join('');
+}
+$('#lista').onclick = ev => {
+  const b = ev.target.closest('.rt');
+  if(b) abrir(b.dataset.f);
+};
+
+async function abrir(archivo){
+  RUTINA = await api('/api/routines/' + encodeURIComponent(archivo));
+  ARCHIVO = archivo;
+  NUEVA = false;
+  render(); cargarLista();
+}
+
+$('#nueva').onclick = () => {
+  RUTINA = {
+    id:'', name:'', weeks:4,
+    days:[{ id:'', name:'', blocks:[nuevoBloque()] }]
+  };
+  ARCHIVO = '';
+  NUEVA = true;
+  render(); cargarLista();
+};
+
+const nuevoBloque = () => ({ label:'Ejercicio principal', ex:[nuevoEj()] });
+const nuevoEj = () => ({ id:'', name:'', series:4, reps:'10', equip:'bar', unit:'kg', tempo:'', peso:'', notes:'' });
+
+// mismos identificadores que la tabla EQUIP de la app
+// misma tabla EQUIP que la app
+const EQUIP = [
+  ['bar',   'Barra'],
+  ['db1',   'Mancuerna / Kettlebell (×1)'],
+  ['db2',   'Mancuernas / Kettlebells (×2)'],
+  ['p1',    'Polea fija (1:1)'],
+  ['p2',    'Polea dinámica (2:1)'],
+  ['p4',    'Polea compuesta (4:1)'],
+  ['bw100', 'Peso corporal (100%)'],
+  ['bw75',  'Peso corporal (75%)'],
+  ['bw50',  'Peso corporal (50%)'],
+  ['bw25',  'Peso corporal (25%)']
+];
+
+/* ---------- render ---------- */
+const hayAlgoAbierto = () => RUTINA.days.some(d =>
+  d.abierto !== false || d.blocks.some(b => b.abierto !== false));
+function render(){
+  if(!RUTINA){ $('#main').innerHTML = '<div class="vacio">Elige una rutina o crea una nueva.</div>'; return; }
+
+  $('#main').innerHTML = `
+    <div class="bar">
+      <h2>${NUEVA ? 'Nueva rutina' : esc(ARCHIVO)}</h2>
+      <button class="btn" id="plegar">${hayAlgoAbierto() ? 'Colapsar todo' : 'Expandir todo'}</button>
+      <button class="btn primary" id="guardar">Guardar</button>
+    </div>
+
+    <div class="fila">
+      <label class="f">Nombre<input class="w-l" id="r-name" value="${esc(RUTINA.name)}"></label>
+      <label class="f">Semanas<input class="w-xs" id="r-weeks" type="number" min="1" max="104" value="${RUTINA.weeks}"></label>
+      ${NUEVA ? `<label class="f">Archivo<input class="w-m" id="r-file" placeholder="routine-3.json"></label>` : ''}
+    </div>
+
+    ${RUTINA.days.map((d, i) => diaHTML(d, i)).join('')}
+
+    <button class="btn" id="add-dia">＋ Añadir día</button>
+  `;
+
+  $('#guardar').onclick = guardar;
+  $('#plegar').onclick = () => {
+    leer();
+    const cerrar = hayAlgoAbierto();
+    RUTINA.days.forEach(d => {
+      d.abierto = !cerrar;
+      d.blocks.forEach(b => b.abierto = !cerrar);
+    });
+    render();
+  };
+  $('#add-dia').onclick = () => {
+    RUTINA.days.push({ id:'', name:'', blocks:[nuevoBloque()] });
+    leer(); render();
+  };
+  $('#main').querySelectorAll('[data-act]').forEach(b => b.onclick = accion);
+}
+
+function diaHTML(d, i){
+  const abierto = d.abierto !== false;
+  const bloques = d.blocks.length;
+  const ejercicios = d.blocks.reduce((n, b) => n + b.ex.length, 0);
+  return `<div class="dia ${abierto ? 'abierto' : ''}" data-dia="${i}" data-id="${esc(d.id)}" data-open="${abierto ? 1 : 0}">
+    <div class="dia-hd">
+      <button class="ico chev" data-act="plega-dia" data-i="${i}" title="Plegar o desplegar">›</button>
+      <span class="num">DÍA ${i+1}</span>
+      ${abierto
+        ? `<label class="f">Nombre<input class="w-l d-name" value="${esc(d.name)}"></label>`
+        : `<input type="hidden" class="d-name" value="${esc(d.name)}">
+           <b style="font-size:13.5px">${esc(d.name) || '—'}</b>
+           <span class="resumen">${bloques} bloques · ${ejercicios} ejercicios</span>`}
+      <span class="sp">
+        <button class="ico" data-act="sube-dia" data-i="${i}" title="Subir" ${i === 0 ? 'disabled' : ''}>↑</button>
+        <button class="ico" data-act="baja-dia" data-i="${i}" title="Bajar" ${i === RUTINA.days.length-1 ? 'disabled' : ''}>↓</button>
+        <button class="btn sm quitar" data-act="borra-dia" data-i="${i}">Eliminar día</button>
+      </span>
+    </div>
+    <div class="dia-bd">
+      ${d.blocks.map((b, j) => bloqueHTML(b, i, j)).join('')}
+      <button class="btn sm" data-act="add-bloque" data-i="${i}">＋ Bloque</button>
+    </div>
+  </div>`;
+}
+
+function bloqueHTML(b, i, j){
+  const lleno = b.ex.length >= 2;   // dos ejercicios ya son una biserie
+  const abierto = b.abierto !== false;
+  return `<div class="bloque ${abierto ? 'abierto' : ''}" data-bloque="${j}" data-open="${abierto ? 1 : 0}">
+    <div class="bloque-hd">
+      <button class="x chev" data-act="plega-bloque" data-i="${i}" data-j="${j}" title="Plegar o desplegar">›</button>
+      ${abierto
+        ? `<label class="f">Bloque<input class="w-m b-label" value="${esc(b.label)}"></label>`
+        : `<input type="hidden" class="b-label" value="${esc(b.label)}">
+           <b style="font-size:12.5px">${esc(b.label) || '—'}</b>
+           <span class="resumen">${esc(b.ex.map(e => e.name || '—').join(' · '))}</span>`}
+      <span class="tag ${lleno ? 'on' : ''}">${lleno ? 'Biserie · sin descanso entre ambos' : 'Ejercicio suelto'}</span>
+      <span class="sp">
+        <button class="btn sm quitar" data-act="borra-bloque" data-i="${i}" data-j="${j}">Quitar bloque</button>
+      </span>
+    </div>
+    <div class="bloque-bd">
+      <table>
+        <thead><tr>
+          <th style="width:25%">Ejercicio</th><th style="width:19%">Tipo de peso</th>
+          <th style="width:7%">Series</th><th style="width:9%">Reps</th><th style="width:8%">Tempo</th>
+          <th style="width:10%">Peso</th><th style="width:8%">Unidad</th>
+          <th style="width:14%">Nota inicial</th><th class="col-x"></th>
+        </tr></thead>
+        <tbody>
+          ${b.ex.map((e, k) => `<tr data-ex="${k}" data-id="${esc(e.id)}">
+            <td><input class="e-name" value="${esc(e.name)}"></td>
+            <td><select class="e-equip">${EQUIP.map(([v, t]) =>
+              `<option value="${v}" ${e.equip === v ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></td>
+            <td><input class="e-series" type="number" min="1" max="20" value="${e.series || 4}"></td>
+            <td><input class="e-reps" value="${esc(e.reps)}"></td>
+            <td><input class="e-tempo" value="${esc(e.tempo)}"></td>
+            <td><input class="e-peso" value="${esc(e.peso)}"></td>
+            <td><select class="e-unit">
+              <option value="kg" ${e.unit !== 'lb' ? 'selected' : ''}>kg</option>
+              <option value="lb" ${e.unit === 'lb' ? 'selected' : ''}>lb</option>
+            </select></td>
+            <td><input class="e-notes" value="${esc(e.notes)}"></td>
+            <td class="col-x"><button class="x" data-act="borra-ex" data-i="${i}" data-j="${j}" data-k="${k}" title="Quitar ejercicio">−</button></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      <button class="btn sm" data-act="add-ex" data-i="${i}" data-j="${j}" style="margin-top:8px" ${lleno ? 'disabled' : ''}>＋ Ejercicio</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- acciones ---------- */
+function accion(ev){
+  const b = ev.currentTarget;
+  const i = +b.dataset.i, j = +b.dataset.j, k = +b.dataset.k;
+  leer();
+  const acts = {
+    'plega-dia': () => RUTINA.days[i].abierto = !(RUTINA.days[i].abierto !== false),
+    'plega-bloque': () => {
+      const b = RUTINA.days[i].blocks[j];
+      b.abierto = !(b.abierto !== false);
+    },
+    'sube-dia': () => RUTINA.days.splice(i-1, 0, RUTINA.days.splice(i, 1)[0]),
+    'baja-dia': () => RUTINA.days.splice(i+1, 0, RUTINA.days.splice(i, 1)[0]),
+    'borra-dia': () => RUTINA.days.splice(i, 1),
+    'add-bloque': () => RUTINA.days[i].blocks.push(nuevoBloque()),
+    'borra-bloque': () => RUTINA.days[i].blocks.splice(j, 1),
+    'add-ex': () => { if(RUTINA.days[i].blocks[j].ex.length < 2) RUTINA.days[i].blocks[j].ex.push(nuevoEj()); },
+    'borra-ex': () => RUTINA.days[i].blocks[j].ex.splice(k, 1)
+  };
+  acts[b.dataset.act]();
+  if(!RUTINA.days.length) RUTINA.days.push({ id:'', name:'', blocks:[nuevoBloque()] });
+  render();
+}
+
+// vuelca el formulario al objeto antes de cualquier cambio estructural
+function leer(){
+  const v = s => (($('#' + s) || {}).value || '').trim();
+  RUTINA.name = v('r-name');
+  RUTINA.weeks = +v('r-weeks') || 1;
+
+  RUTINA.days = [...document.querySelectorAll('.dia')].map((nd, i) => ({
+    // el identificador no se muestra pero se conserva: es la clave del registro guardado
+    id: nd.dataset.id || slug(nd.querySelector('.d-name').value) || ('dia-' + (i+1)),
+    name: nd.querySelector('.d-name').value.trim(),
+    abierto: nd.dataset.open === '1',   // solo para la interfaz, no se guarda
+    blocks: [...nd.querySelectorAll('.bloque')].map(nb => ({
+      label: nb.querySelector('.b-label').value.trim(),
+      abierto: nb.dataset.open === '1',   // solo para la interfaz, no se guarda
+      ex: [...nb.querySelectorAll('tbody tr')].map(nr => {
+        const g = c => nr.querySelector('.' + c).value.trim();
+        return {
+          id: nr.dataset.id || slug(g('e-name')),
+          name: g('e-name'),
+          series: +g('e-series') || 1,
+          reps: g('e-reps'),
+          equip: g('e-equip'),
+          unit: g('e-unit'),
+          tempo: g('e-tempo'),
+          peso: g('e-peso'),
+          notes: g('e-notes')
+        };
+      })
+    }))
+  }));
+}
+
+async function guardar(){
+  leer();
+  if(!RUTINA.id) RUTINA.id = slug(RUTINA.name);
+  let archivo = ARCHIVO;
+  if(NUEVA){
+    archivo = (($('#r-file') || {}).value || '').trim() || (RUTINA.id + '.json');
+    if(!archivo.endsWith('.json')) archivo += '.json';
+  }
+  try{
+    const r = await api('/api/routines/' + encodeURIComponent(archivo), {
+      method:'PUT',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(RUTINA)
+    });
+    ARCHIVO = r.file; NUEVA = false;
+    await cargarLista();
+    render();
+    aviso(r.registrada ? 'Guardada y añadida a config.json' : 'Guardada');
+  }catch(e){
+    aviso(e.message, true);
+  }
+}
+
+cargarLista();
+</script>
+</body>
+</html>

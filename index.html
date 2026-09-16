@@ -71,6 +71,8 @@
   }
 
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  /* sin esto iOS interpreta el doble toque como zoom y cuesta salir de él */
+  html{touch-action:manipulation}
   html,body{margin:0;padding:0}
   body{
     background:
@@ -150,8 +152,11 @@
     flex:1;min-width:0;overflow:hidden;
     display:flex;flex-direction:column;align-items:center;justify-content:center;
     height:34px;border-radius:9px;border:1px solid var(--line);
-    background:var(--card);padding:0 6px;line-height:1.15
+    background:var(--card);padding:0 6px;line-height:1.15;
+    transition:.15s ease
   }
+  .week-pill:hover{border-color:var(--hover-line)}
+  .week-pill:active{transform:scale(.97)}
   .week-pill span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .week-pill #weekLabel{font-weight:700;font-size:12.5px;letter-spacing:.2px}
   .week-pill .dates{font-size:9.5px;font-weight:600;color:var(--txt-3);letter-spacing:.2px}
@@ -173,7 +178,6 @@
   .day.sel small{color:var(--txt-2)}
   .day.rest{opacity:.62}
   .day .dot{position:absolute;top:7px;right:8px;width:6px;height:6px;border-radius:50%}
-  .day .dot.today{background:var(--accent-2);box-shadow:0 0 0 3px rgba(34,211,238,.18)}
   .day .dot.done{background:var(--ok);box-shadow:0 0 0 3px var(--ok-tint)}
   .day .bar{position:absolute;left:9px;right:9px;bottom:4px;height:3px;border-radius:3px;background:var(--track);overflow:hidden}
   .day .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-2),var(--ok));border-radius:3px;transition:width .3s}
@@ -185,13 +189,25 @@
     background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);
     display:flex;gap:12px;align-items:center
   }
-  .day-head::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
-  .day-head.inf::before{background:var(--teal)}
-  .day-head.sup::before{background:var(--purple)}
+  .day-head::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--purple)}
   .day-head .t{flex:1;min-width:0}
   .day-head h2{margin:0;font-size:15.5px;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .day-head .sub{color:var(--txt-3);font-size:11.5px;margin-top:2px;font-variant-numeric:tabular-nums;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .day-head .sub .eff{color:var(--accent-2);font-weight:700}
+  /* acciones del día: en fila para no robar altura a la tarjeta */
+  .head-acts{display:flex;gap:6px;flex:none;align-self:center}
+  .head-acts .hbtn{
+    width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:14px;
+    background:var(--bg-2);border:1px solid var(--line);color:var(--txt-2);transition:.15s
+  }
+  .head-acts .hbtn:hover{color:var(--txt);border-color:var(--hover-line)}
+  .head-acts .hbtn.on{border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.10)}
+
+  /* nota del día: mismo lenguaje que la nota de ejercicio, pero fuera de la tarjeta */
+  .day-note{margin:-6px 0 12px}
+  .day-note .note-view{margin:0}
+  .day-note .note-edit{padding:0}
 
   .ring{width:46px;height:46px;flex:none;position:relative}
   .ring svg{display:block;width:100%;height:100%;transform:rotate(-90deg)}
@@ -396,6 +412,53 @@
   .note-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:7px}
   .note-actions .btn{height:34px;padding:0 13px;font-size:12.5px}
 
+  /* ---------- CARGA / EQUIPO ---------- */
+  .ex-calc{
+    width:calc(100% - 24px);margin:0 12px 9px;padding:7px 9px;border-radius:11px;text-align:left;
+    background:var(--bg-2);border:1px dashed var(--line);
+    display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;transition:.15s
+  }
+  .ex-calc:hover{border-color:var(--hover-line)}
+  .ex-calc .l1{font-size:11.5px;font-weight:700;color:var(--txt-2);min-width:0;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ex-calc .l2{grid-column:1;font-size:11px;color:var(--txt-3);font-variant-numeric:tabular-nums;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ex-calc .l2 b{color:var(--accent-2);font-weight:800}
+  .ex-calc .go{grid-row:1/3;grid-column:2;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+    background:var(--card);border:1px solid var(--line);color:var(--txt-3);font-size:12px}
+  .exsub .load{color:var(--txt-3)}
+
+  /* campos del editor de ejercicio */
+  .fld{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line-soft)}
+  .fld > span{font-size:12.5px;color:var(--txt-2);flex:1;min-width:0}
+  .fld select{max-width:190px}
+  .fld input{
+    width:96px;height:38px;text-align:center;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;
+    border-radius:10px;border:1px solid var(--line);background:var(--bg-2);outline:none;
+    -moz-appearance:textfield;appearance:textfield
+  }
+  .fld input::-webkit-outer-spin-button,.fld input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .fld input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,92,255,.18)}
+  .fld[hidden]{display:none}
+  /* los nombres de montaje no caben junto a la etiqueta: se les da la fila entera */
+  .fld.stack{display:block}
+  .fld.stack select{width:100%;max-width:none;margin-top:8px}
+  .seg{display:inline-flex;border-radius:10px;border:1px solid var(--line);background:var(--card-2);overflow:hidden;flex:none}
+  .seg button{height:36px;padding:0 18px;font-size:13px;font-weight:700;color:var(--txt-3)}
+  .seg button.on{background:var(--accent);color:#fff}
+  .calc-hint{margin:12px 0 16px!important;padding:9px 11px;border-radius:11px;font-size:12px!important;line-height:1.5;
+    background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.22);color:var(--txt-2)!important}
+  .calc-hint b{color:var(--accent-2)}
+
+  /* ---------- SUBIR ---------- */
+  .fab-top{
+    position:fixed;left:max(14px,env(safe-area-inset-left));bottom:calc(14px + var(--safe-b));z-index:49;
+    width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:17px;
+    background:var(--glass);border:1px solid var(--line);color:var(--txt-2);box-shadow:var(--shadow);
+    backdrop-filter:blur(12px);opacity:0;pointer-events:none;transform:translateY(12px);transition:.2s ease
+  }
+  .fab-top.show{opacity:1;pointer-events:auto;transform:none}
+
   /* ---------- REST DAY ---------- */
   .rest-card{
     margin-top:16px;padding:46px 22px;text-align:center;border-radius:var(--radius);
@@ -486,20 +549,49 @@
   .sheet{
     position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(460px,100%);z-index:71;
     background:var(--card);border:1px solid var(--line);border-radius:20px 20px 0 0;
-    padding:18px 18px calc(20px + var(--safe-b));display:none;box-shadow:var(--shadow)
+    padding:18px 18px calc(20px + var(--safe-b));display:none;box-shadow:var(--shadow);
+    max-height:calc(100vh - var(--safe-t) - 24px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain
   }
   .sheet.show{display:block}
-  .sheet h3{margin:2px 0 14px;font-size:16px}
+  .sheet h3{margin:2px 0 14px;font-size:16px;position:sticky;top:-18px;background:var(--card);padding:16px 0 10px;z-index:1}
   .sheet .row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line-soft)}
-  .sheet .row p{margin:0;font-size:13.5px}
+  .sheet .row p{margin:0;font-size:13.5px;min-width:0}
+  .sheet .row select{max-width:150px}
+  /* el nombre de la rutina no cabe junto a la etiqueta: se le da la fila entera */
+  .sheet .row.stack{display:block}
+  .sheet .row.stack select{width:100%;max-width:none;margin-top:9px}
   .sheet .row small{display:block;color:var(--txt-3);font-size:11.5px}
   .switch{width:46px;height:27px;border-radius:99px;background:var(--line);position:relative;transition:.2s;flex:none}
   .switch i{position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:.2s}
   .switch.on{background:var(--ok)}
   .switch.on i{left:22px}
 
+  /* ---------- PLAN: SEMANAS Y DÍAS ---------- */
+  .plan-wk{padding:12px 0;border-top:1px solid var(--line-soft)}
+  .plan-wk:first-of-type{border-top:0}
+  .plan-wk.on .plan-hd b{color:var(--accent-2)}
+  .plan-hd{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .plan-hd b{font-size:13.5px}
+  .plan-hd .pct{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--txt-3);font-variant-numeric:tabular-nums}
+  .plan-hd .pct.full{color:var(--ok)}
+  .plan-hd .bar{flex:1;max-width:120px;height:4px;border-radius:99px;background:var(--track);overflow:hidden}
+  .plan-hd .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-2),var(--ok))}
+  .plan-days{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:7px}
+  .plan-day{
+    position:relative;text-align:left;padding:8px 9px 10px;border-radius:11px;
+    border:1px solid var(--line);background:var(--card-2);transition:.15s ease
+  }
+  .plan-day:hover{border-color:var(--hover-line)}
+  .plan-day.sel{border-color:var(--accent);background:var(--card)}
+  .plan-day.full{border-color:var(--ok-tint-line);background:var(--ok-tint)}
+  .plan-day b{display:block;font-size:12px;font-weight:700}
+  .plan-day small{display:block;font-size:10px;color:var(--txt-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .plan-day .n{display:block;margin-top:5px;font-size:10px;font-weight:700;color:var(--txt-2);font-variant-numeric:tabular-nums}
+  .plan-day .bar{margin-top:4px;height:3px;border-radius:99px;background:var(--track);overflow:hidden}
+  .plan-day .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-2),var(--ok))}
+
   /* ---------- CONFIRMACIÓN ---------- */
-  #modalBg,#restBg{z-index:80}
+  #modalBg,#restBg,#exBg{z-index:80}
   .modal{
     position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:81;
     width:min(360px,calc(100% - 32px));display:none;
@@ -548,7 +640,8 @@
 
       <div class="weeknav">
         <button class="arrow" id="prevWeek" aria-label="Semana anterior">‹</button>
-        <div class="week-pill">
+        <div class="week-pill" id="weekPill" role="button" tabindex="0"
+          title="Ir a una semana o día" aria-label="Ir a una semana o día">
           <span id="weekLabel">Semana 1</span>
           <span class="dates" id="weekDates"></span>
         </div>
@@ -582,11 +675,17 @@
   <button id="timerStop" title="Detener">✕</button>
 </div>
 
+<button class="fab-top" id="btnTop" title="Subir al inicio" aria-label="Subir al inicio">↑</button>
+
 <div class="toast" id="toast">Guardado</div>
 
 <div class="sheet-bg" id="sheetBg"></div>
 <div class="sheet" id="sheet">
   <h3>Ajustes</h3>
+  <div class="row stack" id="rowRoutine">
+    <p>Rutina<small id="routineInfo"></small></p>
+    <select class="sel-borg" id="routineSel"></select>
+  </div>
   <div class="row">
     <p>Temporizador de descanso<small>Habilitado: se inicia al completar cada serie</small></p>
     <div class="switch" id="swTimer"><i></i></div>
@@ -627,6 +726,15 @@
   </div>
 </div>
 
+<div class="sheet-bg" id="planBg"></div>
+<div class="sheet" id="planSheet" role="dialog" aria-modal="true" aria-labelledby="planTitle">
+  <h3 id="planTitle">Ir a…</h3>
+  <div id="planList"></div>
+  <div class="row" style="border:0;padding-top:14px;display:block">
+    <button class="btn" id="planClose" style="width:100%;justify-content:center">Cerrar</button>
+  </div>
+</div>
+
 <div class="sheet-bg" id="modalBg"></div>
 <div class="modal" id="modal" role="alertdialog" aria-modal="true" aria-labelledby="modalTitle">
   <h3 id="modalTitle"></h3>
@@ -662,106 +770,73 @@
   </div>
 </div>
 
+<div class="sheet-bg" id="exBg"></div>
+<div class="modal" id="exModal" role="dialog" aria-modal="true" aria-labelledby="exTitle">
+  <h3 id="exTitle">Editar ejercicio</h3>
+  <p class="who" id="exWho"></p>
+  <label class="fld stack">
+    <span>Tipo de carga</span>
+    <select class="sel-borg" id="exMode"></select>
+  </label>
+  <label class="fld" id="exPctRow">
+    <span>Proporción levantada</span>
+    <input id="exPct" type="text" inputmode="decimal" maxlength="3" aria-label="Porcentaje del peso corporal">
+  </label>
+  <div class="fld">
+    <span>Unidad</span>
+    <div class="seg" id="exUnit" role="group" aria-label="Unidad de peso">
+      <button type="button" data-u="kg">kg</button>
+      <button type="button" data-u="lb">lb</button>
+    </div>
+  </div>
+  <label class="fld">
+    <span>Peso objetivo <small style="display:block;color:var(--txt-3);font-size:11px">Lo que marcas en el campo de la serie</small></span>
+    <input id="exTarget" type="text" inputmode="decimal" aria-label="Peso objetivo">
+  </label>
+  <p class="calc-hint" id="exHint"></p>
+  <div class="modal-actions">
+    <button class="btn danger" id="exReset">Restablecer</button>
+    <button class="btn" id="exCancel">Cancelar</button>
+    <button class="btn primary" id="exSave">Guardar</button>
+  </div>
+</div>
+
 <script>
 /* =========================================================
-   PROGRAMA (hardcodeado desde la hoja de cálculo)
+   PROGRAMA
+   Se carga desde el archivo de rutina indicado en config.json.
    ========================================================= */
-const PROGRAM = [
-  {
-    id:'inf-a', weekday:1, type:'inf', name:'Tren inferior', variant:'Día A',
-    blocks:[
-      { label:'Ejercicio principal', bis:false, ex:[
-        { id:'sentadilla-smith', name:'Sentadilla en Smith', series:4, reps:'8', peso:'29 kg', borg:'7-8' }
-      ]},
-      { label:'1ª Biserie', bis:true, ex:[
-        { id:'prensa-inclinada', name:'Prensa inclinada', series:4, reps:'10', tempo:'1:3', peso:'67 kg', borg:'5-6' },
-        { id:'ext-rodilla', name:'Extensiones de rodilla', series:4, reps:'12', peso:'30 lb', borg:'3-4',
-          ajuste:'Respaldo 3 · Ángulo L · Apertura 11' }
-      ]},
-      { label:'2ª Biserie', bis:true, ex:[
-        { id:'desplantes', name:'Desplantes estáticos', series:4, reps:'6-8', peso:'Peso corporal', borg:'7-8' },
-        { id:'aductores', name:'Máquina de aductores', series:4, reps:'15', tempo:'3:3', peso:'70 lb', borg:'5-6' }
-      ]}
-    ]
-  },
-  {
-    id:'sup-a', weekday:2, type:'sup', name:'Tren superior', variant:'Día A',
-    blocks:[
-      { label:'1ª Biserie', bis:true, ex:[
-        { id:'press-banco-mancuerna', name:'Press de banco horizontal c/mancuerna', series:4, reps:'8', tempo:'3:1', peso:'2 × 10 kg', borg:'5-6' },
-        { id:'lagartijas-inclinadas', name:'Lagartijas inclinadas', series:4, reps:'6', peso:'Peso corporal', borg:'5-6' }
-      ]},
-      { label:'2ª Biserie', bis:true, ex:[
-        { id:'peck-fly', name:'Peck fly', series:4, reps:'12', peso:'40 lb', borg:'7-8' },
-        { id:'laterales-mancuerna', name:'Laterales c/mancuerna', series:4, reps:'12', peso:'2 × 3 kg', borg:'7-8' }
-      ]},
-      { label:'3ª Biserie', bis:true, ex:[
-        { id:'elev-frontal', name:'Elevación frontal c/mancuerna', series:3, reps:'12', tempo:'1:1', peso:'2 × 3 kg', borg:'7-8' },
-        { id:'curl-supino', name:'Curl de bíceps supino', series:3, reps:'12', tempo:'1:3', peso:'2 × 3 kg', borg:'7-8' }
-      ]},
-      { label:'4ª Biserie', bis:true, ex:[
-        { id:'press-militar', name:'Press militar', series:3, reps:'8', peso:'2 × 3 kg', borg:'5-6' },
-        { id:'curl-neutro', name:'Curl de bíceps neutro', series:3, reps:'12', peso:'2 × 3 kg', borg:'5-6' }
-      ]}
-    ]
-  },
-  {
-    id:'inf-b', weekday:4, type:'inf', name:'Tren inferior', variant:'Día B',
-    blocks:[
-      { label:'Ejercicio principal', bis:false, ex:[
-        { id:'peso-muerto-rumano', name:'Peso muerto rumano', series:4, reps:'12', tempo:'1:3', peso:'20 kg', borg:'7-8' }
-      ]},
-      { label:'Ejercicio principal', bis:false, ex:[
-        { id:'hip-thrust', name:'Hip thrust c/barra', series:4, reps:'8', tempo:'3:3', peso:'10 kg', borg:'7-8' }
-      ]},
-      { label:'1ª Biserie', bis:true, ex:[
-        { id:'curl-femoral', name:'Curl femoral sentado', series:4, reps:'10-12', tempo:'1:1', peso:'25 lb', borg:'7-8',
-          ajuste:'Respaldo 3 · Ángulo S · Apertura 3' },
-        { id:'abductores', name:'Máquina de abductores', series:4, reps:'12', peso:'70 lb', borg:'5-6' }
-      ]},
-      { label:'2ª Biserie', bis:true, ex:[
-        { id:'patada-polea', name:'Patada en polea baja', series:4, reps:'12', tempo:'1:3', peso:'17.5 lb', borg:'5-6' },
-        { id:'pantorrilla', name:'Pantorrilla de pie', series:4, reps:'8', tempo:'1:3', peso:'30 kg', borg:'5-6', ajuste:'Barra libre' }
-      ]}
-    ]
-  },
-  {
-    id:'sup-b', weekday:5, type:'sup', name:'Tren superior', variant:'Día B',
-    blocks:[
-      { label:'Ejercicio principal', bis:false, ex:[
-        { id:'jalon-vertical', name:'Jalón vertical c/barra', series:4, reps:'8', tempo:'1:6', peso:'55 lb', borg:'7-8' }
-      ]},
-      { label:'1ª Biserie', bis:true, ex:[
-        { id:'jalon-horizontal', name:'Jalón horizontal c/barra', series:4, reps:'12', tempo:'1:3', peso:'34 lb', borg:'7-8' },
-        { id:'remo-mancuerna', name:'Remo c/mancuerna', series:4, reps:'12', peso:'8 kg', borg:'9-10' }
-      ]},
-      { label:'2ª Biserie', bis:true, ex:[
-        { id:'superman', name:'Superman', series:3, reps:'6 x lado', peso:'Peso corporal', borg:'5-6' },
-        { id:'ext-triceps-barra', name:'Extensión de tríceps c/barra', series:3, reps:'15', peso:'17.5 lb', borg:'5-6' }
-      ]},
-      { label:'3ª Biserie', bis:true, ex:[
-        { id:'press-frances', name:'Press francés c/mancuerna', series:3, reps:'12', peso:'2 × 2 kg', borg:'9-10' },
-        { id:'patada-triceps', name:'Patada de tríceps c/mancuerna', series:3, reps:'8', peso:'2 kg', borg:'5-6' }
-      ]}
-    ]
-  }
-];
+let PROGRAM = [];
+let TOTAL_WEEKS = 4;
+let ROUTINE = null;      // rutina en uso
+let ROUTINES = [];       // todas las disponibles según config.json
 
-const WEEKDAYS = [
-  { i:1, s:'Lun', l:'Lunes' }, { i:2, s:'Mar', l:'Martes' }, { i:3, s:'Mié', l:'Miércoles' },
-  { i:4, s:'Jue', l:'Jueves' }, { i:5, s:'Vie', l:'Viernes' }, { i:6, s:'Sáb', l:'Sábado' },
-  { i:0, s:'Dom', l:'Domingo' }
-];
 const BORG = ['','1-2','3-4','5-6','7-8','9-10'];
-const TOTAL_WEEKS = 16;
+
+/* Tipos de carga: `n` = implementos que se cargan, `f` = proporción del peso anotado
+   que realmente levanta el cuerpo. El campo de la serie siempre guarda el peso COMBINADO
+   (dos mancuernas de 5 kg = 10 kg) para que el volumen del día no dependa del montaje. */
+const EQUIP = {
+  bw100: { label:'Peso corporal (100%)',            kind:'bw',    n:1, f:1 },
+  bw75:  { label:'Peso corporal (75%)',             kind:'bw',    n:1, f:.75 },
+  bw50:  { label:'Peso corporal (50%)',             kind:'bw',    n:1, f:.5 },
+  bw25:  { label:'Peso corporal (25%)',             kind:'bw',    n:1, f:.25 },
+  db1:   { label:'Mancuerna / Kettlebell (×1)',     kind:'load',  n:1, f:1 },
+  db2:   { label:'Mancuernas / Kettlebells (×2)',   kind:'load',  n:2, f:1 },
+  bar:   { label:'Barra',                           kind:'load',  n:1, f:1 },
+  p1:    { label:'Polea fija (1:1)',                kind:'pulley',n:1, f:1,   r:1 },
+  p2:    { label:'Polea dinámica (2:1)',            kind:'pulley',n:1, f:.5,  r:2 },
+  p4:    { label:'Polea compuesta (4:1)',           kind:'pulley',n:1, f:.25, r:4 }
+};
+const LB_TO_KG = 0.4536;
 
 /* =========================================================
    ESTADO / PERSISTENCIA
    ========================================================= */
 const KEY = 'train.gm.v1';
-const FALLBACK_CFG = { theme:'dark', autoTimer:true, restSeconds:60, restEndPopup:true, sounds:true, lockedAlarm:true, tickSound:false };
+const FALLBACK_CFG = { theme:'dark', autoTimer:true, restSeconds:60, restEndPopup:true, sounds:true, lockedAlarm:true, tickSound:false, prefsEpoch:0, routine:'routines/routine-1.json', routines:['routines/routine-1.json'] };
 let CONFIG = FALLBACK_CFG;
-const defaults = () => ({ start:isoMonday(new Date()), week:1, prefs:{}, log:{} });
+const defaults = () => ({ week:1, epoch:0, routine:'', prefs:{}, log:{}, notes:{}, gear:{} });
 
 // prefs solo guarda lo que el usuario cambió a mano; el resto viene de config.json
 const CFG_OF = { theme:'theme', autoTimer:'autoTimer', rest:'restSeconds', endAlert:'restEndPopup', sounds:'sounds', bgAlarm:'lockedAlarm', ticks:'tickSound' };
@@ -771,11 +846,20 @@ function pref(k){
 function setPref(k, v){ state.prefs[k] = v; save(1); }
 
 let state = defaults();
-let selDay = todayWeekday();
+let selDay = 0;          // índice del día dentro de la rutina
 const noteOpen = new Set();   // ejercicios con el editor de nota abierto
 const openEx = new Set();     // ejercicios completos que siguen desplegados
 const closedEx = new Set();   // plegados a mano aunque no estén completos
 const drafts = {};            // borradores de nota sin guardar
+let autoOpen = new Set();     // ejercicios del bloque en curso: se abren solos
+let dayNoteOpen = false;      // editor de la nota del día
+let dayDraft = null;
+
+// al cambiar de día o semana el plegado vuelve a decidirse solo
+function resetCards(){
+  noteOpen.clear(); openEx.clear(); closedEx.clear();
+  dayNoteOpen = false; dayDraft = null;
+}
 
 // config.json define los valores por defecto; los ajustes guardados siempre ganan
 async function loadConfig(){
@@ -792,6 +876,9 @@ async function loadConfig(){
       sounds: j.sounds !== false,
       lockedAlarm: j.lockedAlarm !== false,
       tickSound: j.tickSound === true,
+      prefsEpoch: Number(j.prefsEpoch) || 0,
+      routine: typeof j.routine === 'string' && j.routine ? j.routine : FALLBACK_CFG.routine,
+      routines: Array.isArray(j.routines) && j.routines.length ? j.routines.filter(p => typeof p === 'string') : null,
       restSeconds: [30,45,60,90,120,180].includes(rest) ? rest : FALLBACK_CFG.restSeconds
     };
   }catch(e){
@@ -807,6 +894,24 @@ function ensureFresh(version){
   url.searchParams.set('v', version);
   location.replace(url.toString());
   return true;
+}
+
+// la rutina define el programa, la fecha de inicio y cuántas semanas dura
+async function loadRoutine(path){
+  try{
+    const r = await fetch(path + '?t=' + Date.now(), { cache:'no-store' });
+    if(!r.ok) throw 0;
+    const j = await r.json();
+    const days = Array.isArray(j.days) ? j.days : [];
+    if(!days.length) throw 0;
+    const weeks = Math.max(1, Math.round(Number(j.weeks) || 0));
+    return {
+      path,
+      id: j.id || path,
+      name: j.name || 'Rutina',
+      weeks, days
+    };
+  }catch(e){ return null; }
 }
 
 // recarga manual: relee config.json y pide el HTML a la red, no a la caché
@@ -825,7 +930,10 @@ function load(){
     const base = defaults();
     if(!raw) return base;
     const s = JSON.parse(raw);
-    return { start:s.start || base.start, week:s.week || 1, prefs:s.prefs || {}, log:s.log || {} };
+    return {
+      week:s.week || 1, epoch:s.epoch || 0, routine:s.routine || '',
+      prefs:s.prefs || {}, log:s.log || {}, notes:s.notes || {}, gear:s.gear || {}
+    };
   }catch(e){ return defaults(); }
 }
 let saveT;
@@ -837,12 +945,35 @@ function save(quiet){
   }, 200);
 }
 
+// cada rutina guarda su propio registro: dos programas distintos no comparten series
+function logKey(week){ return (ROUTINE ? ROUTINE.id : 'routine') + '/w' + week; }
+
+// los datos anteriores a las rutinas usaban 'w1', 'w2'… y pertenecen a la primera
+function migrateLogKeys(id){
+  [state.log, state.notes].forEach(store => {
+    Object.keys(store).forEach(k => {
+      if(!/^w\d+$/.test(k)) return;
+      store[id + '/' + k] = store[k];
+      delete store[k];
+    });
+  });
+}
+
+function applyRoutine(r){
+  ROUTINE = r;
+  PROGRAM = r.days;
+  TOTAL_WEEKS = r.weeks;
+  state.routine = r.path;
+  state.week = Math.min(Math.max(state.week || 1, 1), TOTAL_WEEKS);
+  if(selDay >= PROGRAM.length) selDay = 0;
+}
+
 function entry(x){
-  const wk = 'w' + state.week;
+  const wk = logKey(state.week);
   const log = state.log[wk] = state.log[wk] || {};
   let e = log[x.id];
   if(!e){
-    e = { sets:[], borg:'', notes: x.ajuste ? '⚙︎ ' + x.ajuste : '', n:x.series };
+    e = { sets:[], borg:'', notes: x.notes || '', n:x.series };
     log[x.id] = e;
   }
   if(typeof e.n !== 'number') e.n = x.series;
@@ -851,44 +982,70 @@ function entry(x){
   if(e.sets.length > e.n) e.sets.length = e.n;
   return e;
 }
-function peek(week, exId){ return (state.log['w'+week] || {})[exId] || null; }
+function peek(week, exId){ return (state.log[logKey(week)] || {})[exId] || null; }
 function setCount(week, x){ const e = peek(week, x.id); return e ? e.sets.length : x.series; }
 
 /* =========================================================
    UTILIDADES
    ========================================================= */
-function isoMonday(d){
-  const x = new Date(d); const day = (x.getDay() + 6) % 7;
-  x.setHours(0,0,0,0); x.setDate(x.getDate() - day);
-  return x.toISOString().slice(0,10);
-}
-function todayWeekday(){ return new Date().getDay(); }
-function weekRange(n){
-  const s = new Date(state.start + 'T00:00:00');
-  s.setDate(s.getDate() + (n-1)*7);
-  const e = new Date(s); e.setDate(e.getDate() + 6);
-  const f = d => d.toLocaleDateString('es-MX',{ day:'numeric', month:'short' }).replace('.','');
-  return { start:s, end:e, txt:`${f(s)} – ${f(e)}` };
-}
-function dayDate(n, weekday){
-  const r = weekRange(n); const d = new Date(r.start);
-  d.setDate(d.getDate() + ((weekday + 6) % 7));
-  return d;
-}
-function isToday(n, weekday){
-  const d = dayDate(n, weekday), t = new Date();
-  return d.getFullYear()===t.getFullYear() && d.getMonth()===t.getMonth() && d.getDate()===t.getDate();
-}
-function currentWeekNumber(){
-  const s = new Date(state.start + 'T00:00:00');
-  const cur = new Date(isoMonday(new Date()) + 'T00:00:00');
-  const n = Math.floor((cur - s) / 6048e5) + 1;
-  return Math.min(Math.max(n,1), TOTAL_WEEKS);
-}
-function sessionOf(weekday){ return PROGRAM.find(d => d.weekday === weekday) || null; }
+// los días se identifican por su posición en la rutina: Día 1, Día 2…
+function sessionOf(i){ return PROGRAM[i] || null; }
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function num(v){ const n = parseFloat(String(v).replace(',','.')); return isFinite(n) ? n : 0; }
 function unitOf(peso){ return /lb/i.test(peso || '') ? 'lb' : 'kg'; }
+
+/* ---- tipo de carga y pesos efectivos ---- */
+// del texto del programa se deduce el montaje inicial; el editor lo puede sobrescribir
+function guessGear(x){
+  const s = String(x.peso || '');
+  const unit = x.unit === 'lb' ? 'lb' : x.unit === 'kg' ? 'kg' : unitOf(s);
+  const declarado = EQUIP[x.equip] ? x.equip : null;   // la rutina puede fijar el montaje
+  const peso = s.match(/(\d+(?:[.,]\d+)?)\s*[×x]\s*(\d+(?:[.,]\d+)?)/);
+  const uno = s.match(/(\d+(?:[.,]\d+)?)/);
+  if(declarado){
+    const target = EQUIP[declarado].kind === 'bw' ? ''
+      : peso ? fmtW(num(peso[1]) * num(peso[2]))
+      : uno ? fmtW(num(uno[1])) : '';
+    return { mode:declarado, unit, target };
+  }
+  if(/corporal/i.test(s)) return { mode:'bw75', unit, target:'' };
+  if(peso) return { mode:'db2', unit, target: fmtW(num(peso[1]) * num(peso[2])) };
+  return { mode: unit === 'lb' ? 'p1' : 'bar', unit, target: uno ? fmtW(num(uno[1])) : '' };
+}
+function gear(x){
+  const d = guessGear(x);
+  const g = state.gear[x.id] || {};
+  const mode = EQUIP[g.mode] ? g.mode : d.mode;
+  const eq = EQUIP[mode];
+  const pct = typeof g.pct === 'number' ? g.pct : Math.round(eq.f * 100);
+  return {
+    id:x.id, mode, eq, pct,
+    unit: g.unit === 'lb' ? 'lb' : g.unit === 'kg' ? 'kg' : d.unit,
+    target: g.target !== undefined ? g.target : d.target,
+    f: eq.kind === 'bw' ? pct / 100 : eq.f
+  };
+}
+function fmtW(v){
+  const n = Math.round(v * 10) / 10;
+  return (Number.isInteger(n) ? n : n.toFixed(1)).toString().replace('.', ',');
+}
+// lo que se anota en el campo → lo que realmente mueve el cuerpo
+function effOf(g, w){ return num(w) * g.f; }
+// desglose legible: siempre termina en el peso efectivo para que el número del campo se entienda
+function loadTxt(g, w){
+  const v = num(w);
+  if(!v) return g.eq.kind === 'bw' ? `peso corporal · ${g.pct}%` : '—';
+  const u = g.unit, eff = fmtW(effOf(g, v));
+  if(g.eq.kind === 'bw') return `${fmtW(v)} ${u} × ${g.pct}% = ${eff} ${u}`;
+  if(g.eq.n === 2) return `2 × ${fmtW(v / 2)} ${u} = ${fmtW(v)} ${u}`;
+  if(g.eq.r > 1) return `${fmtW(v)} ${u} ÷ ${g.eq.r} = ${eff} ${u}`;
+  return `${fmtW(v)} ${u}`;
+}
+// peso de referencia del ejercicio: el último anotado, o el objetivo
+function workingWeight(e, g){
+  for(let i = e.sets.length - 1; i >= 0; i--) if(e.sets[i].w) return e.sets[i].w;
+  return g.target;
+}
 
 function dayProgress(week, day){
   if(!day) return { done:0, total:0, pct:0 };
@@ -900,13 +1057,23 @@ function dayProgress(week, day){
   }));
   return { done, total, pct: total ? Math.round(done/total*100) : 0 };
 }
-function dayVolume(week, day){
+function weekProgress(week){
+  let done = 0, total = 0;
+  PROGRAM.forEach(d => { const p = dayProgress(week, d); done += p.done; total += p.total; });
+  return { done, total, pct: total ? Math.round(done/total*100) : 0 };
+}
+// volumen en kg: `eff` aplica la proporción del montaje (polea, peso corporal)
+function exVolume(week, x, eff){
+  const e = peek(week, x.id); if(!e) return 0;
+  const g = gear(x);
+  const k = (g.unit === 'lb' ? LB_TO_KG : 1) * (eff ? g.f : 1);
   let v = 0;
-  day.blocks.forEach(b => b.ex.forEach(x => {
-    const e = peek(week, x.id); if(!e) return;
-    const k = unitOf(x.peso) === 'lb' ? 0.4536 : 1;
-    e.sets.forEach(s => { if(s.d || (s.w && s.r)) v += num(s.w) * num(s.r) * k; });
-  }));
+  e.sets.forEach(s => { if(s.d || (s.w && s.r)) v += num(s.w) * num(s.r) * k; });
+  return v;
+}
+function dayVolume(week, day, eff){
+  let v = 0;
+  day.blocks.forEach(b => b.ex.forEach(x => { v += exVolume(week, x, eff); }));
   return Math.round(v);
 }
 
@@ -918,20 +1085,18 @@ const tabs = document.getElementById('dayTabs');
 
 function renderHeader(){
   document.getElementById('weekLabel').textContent = 'Semana ' + state.week;
-  document.getElementById('weekDates').textContent = weekRange(state.week).txt;
+  document.getElementById('weekDates').textContent = 'de ' + TOTAL_WEEKS;
   document.getElementById('prevWeek').disabled = state.week <= 1;
   document.getElementById('nextWeek').disabled = state.week >= TOTAL_WEEKS;
 
-  tabs.innerHTML = WEEKDAYS.map(w => {
-    const s = sessionOf(w.i);
+  tabs.innerHTML = PROGRAM.map((s, i) => {
     const p = dayProgress(state.week, s);
-    const today = isToday(state.week, w.i);
-    const full = s && p.total && p.done === p.total;
-    return `<button class="day ${selDay===w.i?'sel':''} ${s?'':'rest'}" data-day="${w.i}">
-      <b>${w.s}</b>
-      <small>${s ? (s.type==='inf'?'Inferior':'Superior') + ' ' + s.variant.replace('Día ','') : 'Descanso'}</small>
-      ${full ? '<i class="dot done"></i>' : today ? '<i class="dot today"></i>' : ''}
-      ${s ? `<span class="bar"><i style="width:${p.pct}%"></i></span>` : ''}
+    const full = p.total && p.done === p.total;
+    return `<button class="day ${selDay===i?'sel':''}" data-day="${i}">
+      <b>Día ${i+1}</b>
+      <small>${esc(s.name)}</small>
+      ${full ? '<i class="dot done"></i>' : ''}
+      <span class="bar"><i style="width:${p.pct}%"></i></span>
     </button>`;
   }).join('');
 
@@ -941,26 +1106,25 @@ function renderHeader(){
 
 function renderDay(){
   const day = sessionOf(selDay);
-  const wd = WEEKDAYS.find(w => w.i === selDay);
-  const d = dayDate(state.week, selDay);
-  const fecha = d.toLocaleDateString('es-MX',{ day:'numeric', month:'short' }).replace('.','');
 
   if(!day){
     main.innerHTML = `<div class="rest-card">
       <div class="em">🌙</div>
-      <h2>Día de descanso</h2>
-      <p>${esc(wd.l)} ${esc(fecha)} · recupera, hidrátate y duerme bien.</p>
+      <h2>Sin día seleccionado</h2>
+      <p>Esta rutina no tiene días configurados.</p>
     </div>`;
     resetPin();
     return;
   }
 
   const p = dayProgress(state.week, day);
-  const vol = dayVolume(state.week, day);
+  const vol = dayVolume(state.week, day, false);
+  const volEff = dayVolume(state.week, day, true);
   const R = 24, C = 2 * Math.PI * R;
+  autoOpen = activeBlockIds(day);
 
   let html = `
-  <section class="day-head ${day.type}">
+  <section class="day-head">
     <div class="ring">
       <svg viewBox="0 0 56 56">
         <circle cx="28" cy="28" r="${R}" style="stroke:var(--track)" stroke-width="6" fill="none"/>
@@ -973,15 +1137,25 @@ function renderDay(){
       <div class="val">${p.pct}%</div>
     </div>
     <div class="t">
-      <h2>${esc(day.name)} ${esc(day.variant)}</h2>
-      <div class="sub">${esc(wd.l)} ${esc(fecha)} · ${p.done}/${p.total} series · ${vol.toLocaleString('es-MX')} kg</div>
+      <h2>Día ${selDay+1} · ${esc(day.name)}</h2>
+      <div class="sub">${p.done}/${p.total} series · ${vol.toLocaleString('es-MX')} kg${
+        volEff !== vol ? ` · <span class="eff">${volEff.toLocaleString('es-MX')} kg ef.</span>` : ''
+      }</div>
     </div>
-  </section>`;
+    <div class="head-acts">
+      <button class="hbtn ${dayNote(day).trim() ? 'on' : ''}" id="btnDayNote"
+        title="Nota del entrenamiento" aria-label="Nota del entrenamiento">📝</button>
+      <button class="hbtn" id="btnToggleAll"
+        title="Plegar o desplegar todo" aria-label="Plegar o desplegar todo">${anyOpen(day) ? '⌃' : '⌄'}</button>
+    </div>
+  </section>
+  ${dayNoteBlock(day)}`;
 
   day.blocks.forEach(b => {
-    html += `<div class="block ${b.bis?'bis':''}">
-      <div class="block-label ${b.bis?'bis':''}"><i></i>${esc(b.label)}
-        ${b.bis ? '<span class="hint">— sin descanso</span>' : ''}</div>
+    const bis = b.ex.length > 1;   // un bloque con dos ejercicios es una biserie
+    html += `<div class="block ${bis?'bis':''}">
+      <div class="block-label ${bis?'bis':''}"><i></i>${esc(b.label)}
+        ${bis ? '<span class="hint">— sin descanso</span>' : ''}</div>
       <div class="cards">${b.ex.map(x => exCard(x)).join('')}</div>
     </div>`;
   });
@@ -1005,6 +1179,49 @@ function markClampedNotes(){
   });
 }
 
+/* ---- qué tarjetas quedan abiertas ---- */
+function exFull(week, x){
+  const e = peek(week, x.id);
+  return !!e && e.sets.length > 0 && e.sets.every(s => s.d);
+}
+// solo el primer bloque sin terminar queda desplegado; al completarlo se abre el siguiente
+function activeBlockIds(day){
+  const s = new Set();
+  if(!day) return s;
+  const b = day.blocks.find(bl => bl.ex.some(x => !exFull(state.week, x)));
+  if(b) b.ex.forEach(x => s.add(x.id));
+  return s;
+}
+function exOpen(id){ return closedEx.has(id) ? false : openEx.has(id) ? true : autoOpen.has(id); }
+function anyOpen(day){ return day.blocks.some(b => b.ex.some(x => exOpen(x.id))); }
+
+/* ---- nota del entrenamiento completo ---- */
+function dayNote(day){ return (state.notes[logKey(state.week)] || {})[day.id] || ''; }
+function setDayNote(day, txt){
+  const wk = state.notes[logKey(state.week)] = state.notes[logKey(state.week)] || {};
+  if(txt.trim()) wk[day.id] = txt.trim(); else delete wk[day.id];
+}
+function dayNoteBlock(day){
+  const txt = dayNote(day);
+  if(dayNoteOpen){
+    const draft = dayDraft !== null ? dayDraft : txt;
+    return `<div class="day-note"><div class="note-edit">
+      <textarea id="dayNoteTa" placeholder="Cómo fue la sesión: energía, sueño, molestias…">${esc(draft)}</textarea>
+      <div class="note-actions">
+        <button class="btn" id="dayNoteCancel">Cancelar</button>
+        <button class="btn primary" id="dayNoteSave">Guardar nota</button>
+      </div>
+    </div></div>`;
+  }
+  if(!txt.trim()) return '';
+  return `<div class="day-note"><div class="note-view">
+    <span class="ico">📝</span>
+    <span class="txt" data-act="note-more">${esc(txt)}</span>
+    <button class="more" data-act="note-more">Ver más</button>
+    <button class="edit" id="dayNoteEdit" aria-label="Editar nota del entrenamiento">✎</button>
+  </div></div>`;
+}
+
 function doneSummary(e, x){
   const uniq = a => [...new Set(a.filter(Boolean))];
   const reps = uniq(e.sets.map(s => s.r));
@@ -1013,7 +1230,7 @@ function doneSummary(e, x){
   if(!ws.length) return `${e.sets.length}×${rTxt}`;
   const nums = ws.map(num);
   const wTxt = ws.length === 1 ? ws[0] : `${Math.min(...nums)}–${Math.max(...nums)}`;
-  return `${e.sets.length}×${rTxt} · ${wTxt} ${unitOf(x.peso)}`;
+  return `${e.sets.length}×${rTxt} · ${wTxt} ${gear(x).unit}`;
 }
 
 /* ---- reloj de consistencia del descanso ---- */
@@ -1054,12 +1271,14 @@ function restGauge(e){
 function exCard(x){
   const e = entry(x);
   const prev = state.week > 1 ? peek(state.week - 1, x.id) : null;
-  const unit = unitOf(x.peso);
+  const g = gear(x);
+  const unit = g.unit;
   const allDone = e.sets.length > 0 && e.sets.every(s => s.d);
   const editing = noteOpen.has(x.id);
   const draft = drafts[x.id] !== undefined ? drafts[x.id] : e.notes;
   const lv = Math.max(0, BORG.indexOf(e.borg || '') - 1);
-  const collapsed = closedEx.has(x.id) || (allDone && !openEx.has(x.id));
+  const collapsed = !exOpen(x.id);
+  const targetTxt = g.target ? loadTxt(g, g.target) : (g.eq.kind === 'bw' ? loadTxt(g, 0) : x.peso);
 
   const sets = e.sets.map((s, i) => {
     const ph = i > 0 ? (e.sets[i-1].w || '') : '';
@@ -1090,7 +1309,7 @@ function exCard(x){
         <div class="exsub">
           <b>${esc(x.reps)}</b> reps
           ${x.tempo ? `· <span class="tempo">${esc(x.tempo)} seg</span>` : ''}
-          · <span class="target">${esc(x.peso)}</span>
+          · <span class="target">${esc(targetTxt)}</span>
         </div>
         ${allDone ? `<div class="exdone">${esc(doneSummary(e, x))}${e.notes.trim() ? ' · 📝' : ''}</div>` : ''}
       </div>
@@ -1099,6 +1318,12 @@ function exCard(x){
     </div>
 
     <div class="fold"><div class="inner">
+    <button class="ex-calc" data-act="ex-edit" aria-label="Editar carga del ejercicio">
+      <span class="l1">${esc(g.eq.label)} · ${esc(unit)}</span>
+      <span class="l2">${esc(loadTxt(g, workingWeight(e, g)))} · vol. efectivo <b>${
+        Math.round(exVolume(state.week, x, true)).toLocaleString('es-MX')} kg</b></span>
+      <span class="go">✎</span>
+    </button>
     <div class="sets">${sets}</div>
 
     <div class="ex-foot">
@@ -1139,14 +1364,94 @@ function refresh(){ renderHeader(); renderDay(); }
    ========================================================= */
 tabs.addEventListener('click', ev => {
   const b = ev.target.closest('.day'); if(!b) return;
-  selDay = +b.dataset.day; refresh();
+  selDay = +b.dataset.day; resetCards(); refresh();
 });
-document.getElementById('prevWeek').onclick = () => { if(state.week>1){ state.week--; save(1); refresh(); } };
-document.getElementById('nextWeek').onclick = () => { if(state.week<TOTAL_WEEKS){ state.week++; save(1); refresh(); } };
+document.getElementById('prevWeek').onclick = () => { if(state.week>1){ state.week--; resetCards(); save(1); refresh(); } };
+document.getElementById('nextWeek').onclick = () => { if(state.week<TOTAL_WEEKS){ state.week++; resetCards(); save(1); refresh(); } };
+
+/* ---- salto directo a cualquier semana y día ---- */
+const planSheet = document.getElementById('planSheet'), planBg = document.getElementById('planBg');
+
+function openPlan(){
+  const list = document.getElementById('planList');
+  let html = '';
+  for(let w = 1; w <= TOTAL_WEEKS; w++){
+    const wp = weekProgress(w);
+    html += `<div class="plan-wk ${w===state.week?'on':''}">
+      <div class="plan-hd">
+        <b>Semana ${w}</b>
+        <span class="bar"><i style="width:${wp.pct}%"></i></span>
+        <span class="pct ${wp.pct===100?'full':''}">${wp.done}/${wp.total}</span>
+      </div>
+      <div class="plan-days">${PROGRAM.map((d, i) => {
+        const p = dayProgress(w, d);
+        const full = p.total && p.done === p.total;
+        const sel = w === state.week && i === selDay;
+        return `<button class="plan-day ${sel?'sel':''} ${full?'full':''}" data-w="${w}" data-d="${i}">
+          <b>Día ${i+1}${full ? ' ✓' : ''}</b>
+          <small>${esc(d.name)}</small>
+          <span class="n">${p.done}/${p.total}</span>
+          <span class="bar"><i style="width:${p.pct}%"></i></span>
+        </button>`;
+      }).join('')}</div>
+    </div>`;
+  }
+  list.innerHTML = html;
+  planSheet.classList.add('show'); planBg.classList.add('show');
+  const on = list.querySelector('.plan-wk.on');
+  if(on) on.scrollIntoView({ block:'center' });
+}
+function closePlan(){ planSheet.classList.remove('show'); planBg.classList.remove('show'); }
+
+document.getElementById('weekPill').onclick = openPlan;
+document.getElementById('planClose').onclick = closePlan;
+planBg.onclick = closePlan;
+document.getElementById('planList').addEventListener('click', ev => {
+  const b = ev.target.closest('.plan-day'); if(!b) return;
+  state.week = +b.dataset.w;
+  selDay = +b.dataset.d;
+  closePlan(); resetCards(); save(1); refresh();
+});
 
 main.addEventListener('click', async ev => {
   const card = ev.target.closest('.ex');
   const btn = ev.target.closest('[data-act]');
+
+  if(ev.target.closest('#btnDayNote')){
+    dayNoteOpen = !dayNoteOpen;
+    if(!dayNoteOpen) dayDraft = null;
+    refresh();
+    const ta = document.getElementById('dayNoteTa');
+    if(ta){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+    return;
+  }
+  if(ev.target.closest('#dayNoteEdit')){
+    dayNoteOpen = true; refresh();
+    const ta = document.getElementById('dayNoteTa');
+    if(ta){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+    return;
+  }
+  if(ev.target.closest('#dayNoteSave')){
+    const ta = document.getElementById('dayNoteTa');
+    setDayNote(sessionOf(selDay), ta ? ta.value : '');
+    dayNoteOpen = false; dayDraft = null;
+    sfx('save'); save(); refresh();
+    return;
+  }
+  if(ev.target.closest('#dayNoteCancel')){
+    dayNoteOpen = false; dayDraft = null; refresh();
+    return;
+  }
+  if(ev.target.closest('#btnToggleAll')){
+    toggleAllCards();
+    return;
+  }
+  if(!card && btn && btn.dataset.act === 'note-more'){
+    const v = btn.closest('.note-view');
+    const open = v.classList.toggle('expanded');
+    v.querySelector('.more').textContent = open ? 'Ver menos' : 'Ver más';
+    return;
+  }
 
   if(ev.target.closest('#clearDay')){
     const ok = await askConfirm({
@@ -1156,7 +1461,9 @@ main.addEventListener('click', async ev => {
     });
     if(ok){
       const day = sessionOf(selDay);
-      day.blocks.forEach(b => b.ex.forEach(x => { delete (state.log['w'+state.week]||{})[x.id]; }));
+      day.blocks.forEach(b => b.ex.forEach(x => { delete (state.log[logKey(state.week)]||{})[x.id]; }));
+      setDayNote(day, '');
+      resetCards();
       save(); refresh();
     }
     return;
@@ -1186,18 +1493,22 @@ main.addEventListener('click', async ev => {
     if(e.sets[i].d){
       if(!e.sets[i].w && i > 0) e.sets[i].w = e.sets[i-1].w;
       if(!e.sets[i].r) e.sets[i].r = /^\d+$/.test(x.reps) ? x.reps : '';
-      if(pref('autoTimer')) startTimer(pref('rest'), { exId:x.id, i, week:state.week });
+      // con un descanso ya anotado no hay nada que cronometrar: se respeta el dato
+      if(pref('autoTimer') && !e.sets[i].rest) startTimer(pref('rest'), { exId:x.id, i, week:state.week });
       const full = e.sets.every(s => s.d);
       if(full){ openEx.add(x.id); closedEx.delete(x.id); }   // se pliega después, no al instante
       sfx(full ? 'finish' : 'check');
       buzz(full ? 'done' : 'tap');
-    } else {
-      sfx('undo'); buzz('tap');
-      openEx.delete(x.id);
-      if(tInt){                      // desmarcar invalida el descanso en curso, sea cual sea
-        stopTimer();
-        toast('Descanso cancelado');
-      }
+      save(1); refresh();
+      if(full && !tInt) scheduleCollapse(x.id);              // sin temporizador el repaso corre igual
+      return;
+    }
+    sfx('undo'); buzz('tap');
+    openEx.delete(x.id);
+    if(tInt){                        // desmarcar invalida el descanso en curso, sea cual sea
+      stopTimer();
+      stopLiveActivity();
+      toast('Descanso cancelado');
     }
     save(1); refresh();
   }
@@ -1218,6 +1529,9 @@ main.addEventListener('click', async ev => {
   }
   else if(act === 'rest'){
     openRestEdit(x, +btn.closest('.set').dataset.set);
+  }
+  else if(act === 'ex-edit'){
+    openExEdit(x);
   }
   else if(act === 'add-set'){
     const last = e.sets[e.sets.length - 1];
@@ -1260,6 +1574,7 @@ main.addEventListener('click', async ev => {
 });
 
 main.addEventListener('input', ev => {
+  if(ev.target.id === 'dayNoteTa'){ dayDraft = ev.target.value; return; }
   const card = ev.target.closest('.ex'); if(!card) return;
   const x = findEx(card.dataset.ex);
   const e = entry(x);
@@ -1287,6 +1602,17 @@ main.addEventListener('change', ev => {
 function findEx(id){
   for(const d of PROGRAM) for(const b of d.blocks) for(const x of b.ex) if(x.id === id) return x;
   return null;
+}
+
+// un solo botón para las dos direcciones: si queda algo abierto, cierra; si no, abre todo
+function toggleAllCards(){
+  const day = sessionOf(selDay); if(!day) return;
+  const close = anyOpen(day);
+  openEx.clear(); closedEx.clear();
+  day.blocks.forEach(b => b.ex.forEach(x => (close ? closedEx : openEx).add(x.id)));
+  main.querySelectorAll('.ex').forEach(c => cancelCollapse(c));
+  sfx(close ? 'fold' : 'unfold');
+  refresh();
 }
 
 /* =========================================================
@@ -1321,12 +1647,30 @@ function startLiveActivity(sec, target){
   LA.start({
     seconds: sec,
     exercise: ex ? ex.name : 'Descanso',
-    set: target ? 'S' + (target.i + 1) : ''
+    set: target ? 'S' + (target.i + 1) : '',
+    exId: target ? target.exId : '',
+    setIndex: target ? target.i : 0,
+    week: target ? target.week : state.week
   }).catch(() => {});
 }
 function stopLiveActivity(){
   const LA = plug('LiveActivity');
   if(LA) LA.stop().catch(() => {});
+}
+// el botón "Registrar" de la tarjeta guarda en nativo; aquí se recoge al volver a la app
+function applyPendingRest(items){
+  if(!items || !items.length) return;
+  items.forEach(it => {
+    if(timerSet && timerSet.exId === it.exId && timerSet.i === it.set && timerSet.week === it.week) stopTimer();
+    saveSetRest({ exId:it.exId, i:it.set, week:it.week }, it.seconds);
+  });
+  stopLiveActivity();
+  if(resolveConfirm) endConfirm(false);   // el diálogo de registro ya no tiene sentido
+}
+async function syncPendingRest(){
+  const LA = plug('LiveActivity');
+  if(!LA || !LA.pending) return;
+  try{ const r = await LA.pending(); applyPendingRest(r && r.items); }catch(e){}
 }
 /* El tic-tac se agenda contra el reloj de audio, no contra el intervalo: si el hilo
    principal se atasca (render, scroll) el intervalo se retrasa y el ritmo se oye lento. */
@@ -1388,7 +1732,7 @@ function stopTimer(keepTarget){
   tLeft = 0; tEndAt = 0; tickAt = 0;
   tEl.classList.remove('show','hot');
   disarmAlarm();
-  stopLiveActivity();
+  // la tarjeta no se cierra aquí: se queda anunciando el fin hasta que se registre
   if(!keepTarget){ timerSet = null; markTimingSet(); }
 }
 // resalta en la tarjeta la serie a la que pertenece el descanso activo
@@ -1409,11 +1753,13 @@ function restEnded(elapsed, ended = true){
   const target = timerSet;
   if(modal.classList.contains('show') || (ended && !pref('endAlert'))){
     toast((ended ? 'Descanso terminado · ' : 'Descanso detenido · ') + fmtDur(elapsed));
+    stopLiveActivity();
     timerSet = null; markTimingSet(); maybeScheduleCollapse(target);
     return;
   }
   const title = ended ? '⏰ Descanso terminado' : '⏹ Descanso detenido';
   if(!target){
+    stopLiveActivity();
     askConfirm({ title, text:`Descansaste ${fmtDur(elapsed)}. Arranca la siguiente serie.`,
       ok:'Voy a la siguiente serie', okClass:'primary', cancel:false });
     return;
@@ -1436,11 +1782,12 @@ function restEnded(elapsed, ended = true){
     const t = total();
     clearInterval(extraInt); extraInt = null;
     if(yes) saveSetRest(target, t);
+    stopLiveActivity();
     timerSet = null; markTimingSet(); maybeScheduleCollapse(target);
   });
 }
 function saveSetRest(target, seconds){
-  const e = (state.log['w' + target.week] || {})[target.exId];
+  const e = (state.log[logKey(target.week)] || {})[target.exId];
   if(!e || !e.sets[target.i]) return;
   e.sets[target.i].rest = seconds;
   sfx('save');
@@ -1452,7 +1799,7 @@ function saveSetRest(target, seconds){
 let closeT = null;
 function maybeScheduleCollapse(target){
   if(!target || !pref('autoTimer') || target.week !== state.week) return;
-  const e = (state.log['w' + target.week] || {})[target.exId];
+  const e = (state.log[logKey(target.week)] || {})[target.exId];
   if(e && e.sets.every(s => s.d)) scheduleCollapse(target.exId);
 }
 function scheduleCollapse(exId){
@@ -1538,6 +1885,83 @@ document.getElementById('restClear').onclick = () => {
 document.getElementById('restCancel').onclick = closeRestEdit;
 restBg.onclick = closeRestEdit;
 
+/* ---- editor de carga del ejercicio ---- */
+const exModal = document.getElementById('exModal'), exBg = document.getElementById('exBg');
+const exMode = document.getElementById('exMode'), exPct = document.getElementById('exPct');
+const exUnit = document.getElementById('exUnit'), exTarget = document.getElementById('exTarget');
+let exEditing = null;
+
+exMode.innerHTML = Object.keys(EQUIP)
+  .map(k => `<option value="${k}">${esc(EQUIP[k].label)}</option>`).join('');
+
+function openExEdit(x){
+  const g = gear(x);
+  exEditing = x;
+  document.getElementById('exWho').textContent = x.name;
+  exMode.value = g.mode;
+  exPct.value = g.pct;
+  exTarget.value = g.target || '';
+  exUnit.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.u === g.unit));
+  document.getElementById('exReset').disabled = !state.gear[x.id];
+  syncExUI();
+  exModal.classList.add('show'); exBg.classList.add('show');
+}
+function closeExEdit(){
+  exModal.classList.remove('show'); exBg.classList.remove('show');
+  exEditing = null;
+}
+function clampPct(v){ const n = Math.round(num(v)); return Math.max(1, Math.min(100, n || 100)); }
+// misma forma que gear(), pero leyendo el formulario en vez del estado guardado
+function draftGear(){
+  const mode = EQUIP[exMode.value] ? exMode.value : 'bar';
+  const eq = EQUIP[mode];
+  const pct = clampPct(exPct.value);
+  const on = exUnit.querySelector('button.on');
+  return {
+    mode, eq, pct,
+    unit: on && on.dataset.u === 'lb' ? 'lb' : 'kg',
+    target: exTarget.value.trim(),
+    f: eq.kind === 'bw' ? pct / 100 : eq.f
+  };
+}
+function syncExUI(){
+  if(!exEditing) return;
+  const d = draftGear();
+  document.getElementById('exPctRow').hidden = d.eq.kind !== 'bw';
+  const w = d.target || workingWeight(entry(exEditing), d);
+  const pair = d.eq.n === 2 ? ' · anota el peso combinado de las dos' : '';
+  document.getElementById('exHint').textContent = num(w)
+    ? `Campo de la serie: ${loadTxt(d, w)}${pair}`
+    : `Sin peso objetivo aún${pair}`;
+}
+exMode.onchange = () => {
+  const eq = EQUIP[exMode.value];
+  if(eq && eq.kind === 'bw') exPct.value = Math.round(eq.f * 100);
+  syncExUI();
+};
+exUnit.onclick = ev => {
+  const b = ev.target.closest('button[data-u]'); if(!b) return;
+  exUnit.querySelectorAll('button').forEach(n => n.classList.toggle('on', n === b));
+  syncExUI();
+};
+[exPct, exTarget].forEach(el => el.addEventListener('input', syncExUI));
+document.getElementById('exSave').onclick = () => {
+  const x = exEditing, d = draftGear();
+  closeExEdit(); if(!x) return;
+  state.gear[x.id] = { mode:d.mode, pct:d.pct, unit:d.unit, target:d.target };
+  sfx('save');
+  save(); refresh();
+};
+document.getElementById('exReset').onclick = () => {
+  const x = exEditing;
+  closeExEdit(); if(!x) return;
+  delete state.gear[x.id];
+  sfx('warn');
+  save(); refresh(); toast('Carga restablecida');
+};
+document.getElementById('exCancel').onclick = closeExEdit;
+exBg.onclick = closeExEdit;
+
 document.getElementById('timerStop').onclick = () => {
   const elapsed = Math.round((Date.now() - tStartAt)/1000);
   stopTimer(true);
@@ -1613,6 +2037,7 @@ document.addEventListener('visibilitychange', () => {
   if(Date.now() - hiddenAt > 30000 || !actx || actx.state !== 'running') needsAudioReset = true;
   audio();                                 // reaplica la categoría si iOS la reinició
   pruneStaleAlarm();
+  syncPendingRest();                       // descansos registrados desde la pantalla bloqueada
   if(tInt) tick();
   else disarmAlarm();                      // sin descanso activo no debe quedar nada agendado
 });
@@ -1735,6 +2160,7 @@ function plug(name){
 }
 const REST_NOTIF = 8801;
 const WARN_NOTIF = 8802;
+const REST_ACTIONS = 'REST_DONE';
 let notifOk = null;
 
 async function notifAllowed(){
@@ -1760,7 +2186,9 @@ async function scheduleRestNotif(seconds, target){
     title: '⏰ Descanso terminado',
     body: who,
     schedule: { at: new Date(Date.now() + seconds * 1000), allowWhileIdle: true },
-    sound: 'default'
+    sound: 'default',
+    actionTypeId: REST_ACTIONS,
+    extra: target ? { exId:target.exId, i:target.i, week:target.week, at:tStartAt } : null
   }];
   if(seconds > 13){
     list.push({
@@ -1784,6 +2212,28 @@ function cancelRestNotif(){
     LN.cancel({ notifications:ids });
     if(LN.removeDeliveredNotifications) LN.removeDeliveredNotifications({ notifications:ids });
   }catch(e){}
+}
+
+/* Sin `foreground` ni `requiresAuthentication` el sistema ejecuta la acción sin desbloquear,
+   que es lo que el botón de la Live Activity no consigue. El evento llega con
+   retainUntilConsumed, así que no se pierde aunque la app despierte sin WebView. */
+function initNotifActions(){
+  const LN = plug('LocalNotifications');
+  if(!LN || !LN.registerActionTypes) return;
+  LN.registerActionTypes({
+    types: [{ id: REST_ACTIONS, actions: [{ id:'registrar', title:'Registrar descanso' }] }]
+  }).catch(() => {});
+  LN.addListener('localNotificationActionPerformed', ev => {
+    if(!ev || ev.actionId !== 'registrar') return;
+    const x = (ev.notification && ev.notification.extra) || null;
+    if(!x || !x.exId) return;
+    const seconds = Math.max(0, Math.round((Date.now() - x.at) / 1000));
+    if(timerSet && timerSet.exId === x.exId && timerSet.i === x.i && timerSet.week === x.week) stopTimer();
+    saveSetRest({ exId:x.exId, i:x.i, week:x.week }, seconds);
+    stopLiveActivity();
+    cancelRestNotif();
+    if(resolveConfirm) endConfirm(false);
+  });
 }
 
 let alarmNodes = [], alarmArmed = false, alarmAt = 0, alarmWallAt = 0, keepAlive = null;
@@ -1838,7 +2288,7 @@ function stopKeepAlive(){
 }
 
 // clic genérico de interfaz; los controles con sonido propio se excluyen
-const OWN_SFX = '#restSave,#restClear,#swSound,[data-silent],[data-act="set"],[data-act="note-save"]';
+const OWN_SFX = '#restSave,#restClear,#exSave,#exReset,#swSound,[data-silent],[data-act="set"],[data-act="note-save"]';
 document.addEventListener('click', ev => {
   const t = ev.target.closest('button,.switch,.chip');
   if(!t || t.disabled || t.matches(OWN_SFX)) return;
@@ -1852,6 +2302,32 @@ const sheet = document.getElementById('sheet'), sheetBg = document.getElementByI
 const swTimer = document.getElementById('swTimer'), restSel = document.getElementById('restSel');
 const swAlert = document.getElementById('swAlert'), swSound = document.getElementById('swSound');
 const swBg = document.getElementById('swBg'), swTicks = document.getElementById('swTicks');
+const routineSel = document.getElementById('routineSel');
+
+// una sola rutina no necesita selector
+function fillRoutineSel(){
+  document.getElementById('rowRoutine').hidden = ROUTINES.length < 2;
+  routineSel.innerHTML = ROUTINES
+    .map(r => `<option value="${esc(r.path)}">${esc(r.name)}</option>`).join('');
+  syncRoutineInfo();
+}
+function syncRoutineInfo(){
+  if(!ROUTINE) return;
+  routineSel.value = ROUTINE.path;
+  document.getElementById('routineInfo').textContent =
+    `${ROUTINE.weeks} semanas · ${ROUTINE.days.length} días por semana`;
+}
+routineSel.onchange = () => {
+  const r = ROUTINES.find(x => x.path === routineSel.value);
+  if(!r || r.path === ROUTINE.path) return;
+  stopTimer(); stopLiveActivity(); cancelRestNotif();   // el descanso apuntaba a otro programa
+  state.week = 1;
+  applyRoutine(r);
+  resetCards();
+  syncRoutineInfo();
+  save(); refresh();
+  toast('Rutina: ' + r.name);
+};
 
 function openSheet(){
   swTimer.classList.toggle('on', !!pref('autoTimer'));
@@ -1940,6 +2416,8 @@ document.addEventListener('keydown', ev => {
   if(ev.key !== 'Escape') return;
   if(resolveConfirm) endConfirm(false);
   else if(restTarget) closeRestEdit();
+  else if(exEditing) closeExEdit();
+  else if(planSheet.classList.contains('show')) closePlan();
   else closeSheet();
 });
 
@@ -1970,7 +2448,7 @@ function measureHeader(){
   pinAt = el ? el.getBoundingClientRect().bottom + scrollY - headerEl.offsetHeight : Infinity;
 }
 function updatePin(day, p){
-  document.getElementById('pinTitle').textContent = day.name + ' ' + day.variant;
+  document.getElementById('pinTitle').textContent = 'Día ' + (selDay + 1) + ' · ' + day.name;
   document.getElementById('pinSets').textContent = p.done + '/' + p.total;
   document.getElementById('pinPct').textContent = p.pct + '%';
   document.getElementById('pinBar').style.width = p.pct + '%';
@@ -1986,10 +2464,13 @@ function setNav(hidden){
   headerEl.classList.toggle('hide', hidden);
   document.body.classList.toggle('nav-hidden', hidden);
 }
+const btnTop = document.getElementById('btnTop');
+btnTop.onclick = () => scrollTo({ top:0, behavior:'smooth' });
 function onScroll(){
   const y = Math.max(0, scrollY);
   setNav(y > TOP_ZONE);                       // la navegación solo existe arriba del todo
   pinbar.classList.toggle('show', y > pinAt);
+  btnTop.classList.toggle('show', y > innerHeight * 0.8);
 }
 addEventListener('scroll', () => {
   if(ticking) return;
@@ -2011,18 +2492,34 @@ function toast(msg){
 (async function boot(){
   CONFIG = await loadConfig();
   if(ensureFresh(CONFIG.version)) return;
-  state = load();
-  const auto = currentWeekNumber();
-  if(!localStorage.getItem(KEY)) state.week = 1; else state.week = state.week || auto;
-  if(!sessionOf(selDay)){
-    const next = PROGRAM.find(d => d.weekday >= selDay) || PROGRAM[0];
-    selDay = next.weekday;
+  const paths = CONFIG.routines || [CONFIG.routine];
+  ROUTINES = (await Promise.all(paths.map(loadRoutine))).filter(Boolean);
+  if(!ROUTINES.length){
+    document.getElementById('main').innerHTML =
+      `<div class="rest-card"><h2>No se pudo cargar la rutina</h2><p>Revisa <b>${esc(paths.join(', '))}</b></p></div>`;
+    return;
   }
+  state = load();
+  // subir prefsEpoch en config.json descarta los ajustes guardados y reimpone los valores por defecto
+  if(CONFIG.prefsEpoch && state.epoch !== CONFIG.prefsEpoch){
+    state.prefs = {};
+    state.epoch = CONFIG.prefsEpoch;
+  }
+  migrateLogKeys(ROUTINES[0].id);
+  const nuevo = !localStorage.getItem(KEY);
+  applyRoutine(ROUTINES.find(r => r.path === state.routine)
+            || ROUTINES.find(r => r.path === CONFIG.routine)
+            || ROUTINES[0]);
+  if(nuevo) state.week = 1;
+  state.week = Math.min(Math.max(state.week, 1), TOTAL_WEEKS);
   applyTheme();
   if(plug('LocalNotifications')) document.getElementById('rowBg').hidden = true;
+  initNotifActions();
+  fillRoutineSel();
   refresh();
   measureHeader();
   onScroll();
+  syncPendingRest();
   document.getElementById('appVer').textContent = 'Versión ' + (CONFIG.version || 'local');
   save(1);
 })();

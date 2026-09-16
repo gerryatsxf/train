@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "sync": "mkdir -p www && cp index.html config.json www/ && cap sync ios",
+    "sync": "mkdir -p www && cp index.html config.json www/ && cp -R routines www/ && cap sync ios",
     "ios": "pnpm run sync && cap open ios",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

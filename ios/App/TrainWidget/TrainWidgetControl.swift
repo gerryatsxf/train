@@ -9,6 +9,7 @@ import AppIntents
 import SwiftUI
 import WidgetKit
 
+@available(iOS 18.0, *)
 struct TrainWidgetControl: ControlWidget {
     var body: some ControlWidgetConfiguration {
         StaticControlConfiguration(
@@ -28,6 +29,7 @@ struct TrainWidgetControl: ControlWidget {
     }
 }
 
+@available(iOS 18.0, *)
 extension TrainWidgetControl {
     struct Provider: ControlValueProvider {
         var previewValue: Bool {

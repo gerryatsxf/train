@@ -1,6 +1,13 @@
 {
-  "$comment": "Valores por defecto de la experiencia. Solo aplican a dispositivos sin ajustes guardados; lo que el usuario cambie en Ajustes tiene prioridad. Sube 'version' en cada deploy para que la app se recargue sola con la build nueva.",
-  "version": "2026-09-04.12",
+  "$comment": "Valores por defecto de la experiencia. Solo aplican a dispositivos sin ajustes guardados; lo que el usuario cambie en Ajustes tiene prioridad. Sube 'version' en cada deploy para que la app se recargue sola con la build nueva. Sube 'prefsEpoch' para descartar los ajustes guardados del dispositivo y reimponer estos valores. 'routines' lista los programas disponibles y 'routine' marca cuál se usa por defecto.",
+  "version": "2026-09-15.9",
+  "prefsEpoch": 1,
+  "routine": "routines/routine-1.json",
+  "routines": [
+    "routines/routine-1.json",
+    "routines/routine-2.json",
+    "routines/routine-3.json"
+  ],
   "theme": "dark",
   "autoTimer": true,
   "restSeconds": 60,

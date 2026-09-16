@@ -1,0 +1,428 @@
+{
+  "$comment": "Rutina de entrenamiento. 'weeks' es cuantas semanas dura. Los dias se numeran por su orden en esta lista: el primero es el Dia 1, el segundo el Dia 2, etc. No hay fechas ni dias de la semana. Un bloque con dos ejercicios es una biserie y se encadenan sin descanso; con uno es un ejercicio suelto. 'equip' fija el tipo de peso, 'unit' la unidad y 'peso' el valor de referencia. El esfuerzo percibido (Borg) no se define aqui: se anota en la app.",
+  "id": "routine-3",
+  "name": "Plan 3 · Tren inferior / superior",
+  "weeks": 4,
+  "days": [
+    {
+      "id": "tren-inferior",
+      "name": "Tren inferior",
+      "blocks": [
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "sentadilla-sumo-c-mancuerna",
+              "name": "Sentadilla sumo c/mancuerna",
+              "series": 4,
+              "reps": "12",
+              "equip": "db1",
+              "unit": "kg",
+              "peso": "26"
+            }
+          ]
+        },
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "hip-thrust-c-barra",
+              "name": "Hip thrust c/barra",
+              "series": 3,
+              "reps": "8",
+              "equip": "bar",
+              "unit": "kg"
+            }
+          ]
+        },
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "curl-femoral-negativas",
+              "name": "Curl femoral negativas",
+              "series": 4,
+              "reps": "12",
+              "equip": "p1",
+              "unit": "lb",
+              "tempo": "1:4",
+              "peso": "30",
+              "notes": "Subes en 1 seg, bajas en 4 seg"
+            }
+          ]
+        },
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "bulgaras",
+              "name": "Búlgaras",
+              "series": 4,
+              "reps": "8",
+              "equip": "db2",
+              "unit": "kg",
+              "tempo": "1:3",
+              "peso": "2 × 6",
+              "notes": "12 kg combinados"
+            }
+          ]
+        },
+        {
+          "label": "1ª Biserie",
+          "ex": [
+            {
+              "id": "maquina-de-abductor",
+              "name": "Máquina de abductor",
+              "series": 3,
+              "reps": "25",
+              "equip": "p1",
+              "unit": "lb",
+              "peso": "40"
+            },
+            {
+              "id": "pantorrilla-en-maquina",
+              "name": "Pantorrilla en máquina",
+              "series": 3,
+              "reps": "12",
+              "equip": "bar",
+              "unit": "kg",
+              "peso": "87"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tren-superior",
+      "name": "Tren superior",
+      "blocks": [
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "dominadas-en-maquina-asistida",
+              "name": "Dominadas en máquina asistida",
+              "series": 4,
+              "reps": "12",
+              "equip": "p1",
+              "unit": "lb"
+            }
+          ]
+        },
+        {
+          "label": "1ª Biserie",
+          "ex": [
+            {
+              "id": "dominadas-australianas",
+              "name": "Dominadas australianas",
+              "series": 4,
+              "reps": "8",
+              "equip": "bw50",
+              "unit": "kg"
+            },
+            {
+              "id": "curl-de-biceps-con-barra-z",
+              "name": "Curl de bíceps con barra Z",
+              "series": 3,
+              "reps": "12",
+              "equip": "bar",
+              "unit": "kg"
+            }
+          ]
+        },
+        {
+          "label": "2ª Biserie",
+          "ex": [
+            {
+              "id": "remo-en-negativa-unilateral-en-polea",
+              "name": "Remo en negativa unilateral en polea",
+              "series": 3,
+              "reps": "15",
+              "equip": "p1",
+              "unit": "lb",
+              "notes": "Bajas en 6 seg, sostienes 1 seg"
+            },
+            {
+              "id": "curl-de-biceps-neutro-c-mancuernas",
+              "name": "Curl de bíceps neutro c/mancuernas",
+              "series": 4,
+              "reps": "8",
+              "equip": "db2",
+              "unit": "kg"
+            }
+          ]
+        },
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "extension-de-triceps-en-polea-alta",
+              "name": "Extensión de tríceps en polea alta",
+              "series": 3,
+              "reps": "12",
+              "equip": "p1",
+              "unit": "lb"
+            }
+          ]
+        },
+        {
+          "label": "Cardio",
+          "ex": [
+            {
+              "id": "caminadora",
+              "name": "Caminadora",
+              "series": 1,
+              "reps": "30 min",
+              "equip": "bw100",
+              "unit": "kg"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tren-inferior-2",
+      "name": "Tren inferior",
+      "blocks": [
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "sentadilla-goblet-c-mancuerna",
+              "name": "Sentadilla goblet c/mancuerna",
+              "series": 4,
+              "reps": "12",
+              "equip": "db1",
+              "unit": "kg"
+            }
+          ]
+        },
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "prensa-lineal",
+              "name": "Prensa lineal",
+              "series": 4,
+              "reps": "15",
+              "equip": "bar",
+              "unit": "kg"
+            }
+          ]
+        },
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "leg-extension",
+              "name": "Leg extension",
+              "series": 4,
+              "reps": "8",
+              "equip": "p1",
+              "unit": "lb"
+            }
+          ]
+        },
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "desplantes-c-mancuerna",
+              "name": "Desplantes c/mancuerna",
+              "series": 3,
+              "reps": "10 por lado",
+              "equip": "db2",
+              "unit": "kg"
+            }
+          ]
+        },
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "maquina-de-aductor",
+              "name": "Máquina de aductor",
+              "series": 3,
+              "reps": "25",
+              "equip": "p1",
+              "unit": "lb"
+            }
+          ]
+        },
+        {
+          "label": "Cardio",
+          "ex": [
+            {
+              "id": "trote-ligero",
+              "name": "Trote ligero",
+              "series": 1,
+              "reps": "20 min",
+              "equip": "bw100",
+              "unit": "kg",
+              "notes": "Trotas 1 min, caminas 2 min"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tren-superior-2",
+      "name": "Tren superior",
+      "blocks": [
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "chin-up-negativa-en-maquina-de-dominada",
+              "name": "Chin up negativa en máquina de dominada",
+              "series": 4,
+              "reps": "6-8",
+              "equip": "p1",
+              "unit": "lb",
+              "notes": "Mantienes 3 seg arriba"
+            }
+          ]
+        },
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "press-de-banca-c-barra",
+              "name": "Press de banca c/barra",
+              "series": 3,
+              "reps": "12",
+              "equip": "bar",
+              "unit": "kg"
+            }
+          ]
+        },
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "half-kneeling-vertical-press",
+              "name": "Half kneeling vertical press",
+              "series": 3,
+              "reps": "8",
+              "equip": "db1",
+              "unit": "lb",
+              "peso": "10",
+              "notes": "10-15 lb"
+            }
+          ]
+        },
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "cable-flys",
+              "name": "Cable flys",
+              "series": 3,
+              "reps": "12",
+              "equip": "p1",
+              "unit": "lb"
+            }
+          ]
+        },
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "elevaciones-laterales-c-mancuerna",
+              "name": "Elevaciones laterales c/mancuerna",
+              "series": 2,
+              "reps": "15",
+              "equip": "db2",
+              "unit": "kg"
+            }
+          ]
+        },
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "fondos-en-banco",
+              "name": "Fondos en banco",
+              "series": 3,
+              "reps": "12",
+              "equip": "bw75",
+              "unit": "kg"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tren-inferior-3",
+      "name": "Tren inferior",
+      "blocks": [
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "wall-ball-shots",
+              "name": "Wall ball shots",
+              "series": 4,
+              "reps": "12",
+              "equip": "db1",
+              "unit": "kg"
+            }
+          ]
+        },
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "prensa-sumo",
+              "name": "Prensa sumo",
+              "series": 4,
+              "reps": "8",
+              "equip": "bar",
+              "unit": "kg"
+            }
+          ]
+        },
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "hip-thrust-negativos",
+              "name": "Hip thrust negativos",
+              "series": 3,
+              "reps": "8",
+              "equip": "bar",
+              "unit": "kg",
+              "notes": "Bajas en 6 seg, mantienes 1 seg arriba"
+            }
+          ]
+        },
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "patada-lateral-en-polea",
+              "name": "Patada lateral en polea",
+              "series": 3,
+              "reps": "15",
+              "equip": "p1",
+              "unit": "lb"
+            }
+          ]
+        },
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "planchas-laterales",
+              "name": "Planchas laterales",
+              "series": 3,
+              "reps": "20 seg por lado",
+              "equip": "bw100",
+              "unit": "kg"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

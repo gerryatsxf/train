@@ -24,6 +24,8 @@
 		A1B2C3D400000000000000B4 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000000000000B3 /* MainViewController.swift */; };
 		A1B2C3D400000000000000B6 /* LiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000000000000B5 /* LiveActivity.swift */; };
 		A1B2C3D400000000000000B8 /* RestAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000000000000B7 /* RestAttributes.swift */; };
+		A1B2C3D400000000000000BA /* RestIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000000000000B9 /* RestIntents.swift */; };
+		A1B2C3D400000000000000BB /* RestIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000000000000B9 /* RestIntents.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -69,6 +71,7 @@
 		A1B2C3D400000000000000B3 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
 		A1B2C3D400000000000000B5 /* LiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivity.swift; sourceTree = "<group>"; };
 		A1B2C3D400000000000000B7 /* RestAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestAttributes.swift; sourceTree = "<group>"; };
+		A1B2C3D400000000000000B9 /* RestIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestIntents.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -145,6 +148,7 @@
 				A1B2C3D400000000000000B3 /* MainViewController.swift */,
 				A1B2C3D400000000000000B5 /* LiveActivity.swift */,
 				A1B2C3D400000000000000B7 /* RestAttributes.swift */,
+				A1B2C3D400000000000000B9 /* RestIntents.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
@@ -272,6 +276,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				47D827B6304B99D400B092FD /* RestAttributes.swift in Sources */,
+				A1B2C3D400000000000000BB /* RestIntents.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -284,6 +289,7 @@
 				A1B2C3D400000000000000B4 /* MainViewController.swift in Sources */,
 				A1B2C3D400000000000000B6 /* LiveActivity.swift in Sources */,
 				A1B2C3D400000000000000B8 /* RestAttributes.swift in Sources */,
+				A1B2C3D400000000000000BA /* RestIntents.swift in Sources */,
 				9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -338,7 +344,7 @@
 				INFOPLIST_FILE = TrainWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = TrainWidget;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -381,7 +387,7 @@
 				INFOPLIST_FILE = TrainWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = TrainWidget;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

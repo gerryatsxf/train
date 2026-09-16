@@ -11,7 +11,8 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
     public let jsName = "LiveActivity"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "start", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "stop", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "stop", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "pending", returnType: CAPPluginReturnPromise)
     ]
 
     private var current: Any?
@@ -30,14 +31,18 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
             endAt: now.addingTimeInterval(seconds),
             startedAt: now,
             exercise: exercise,
-            setLabel: setLabel
+            setLabel: setLabel,
+            exId: call.getString("exId") ?? "",
+            setIndex: call.getInt("setIndex") ?? 0,
+            week: call.getInt("week") ?? 0
         )
 
         endCurrent()
         do {
             let activity = try Activity.request(
                 attributes: RestAttributes(title: "Descanso"),
-                content: .init(state: state, staleDate: state.endAt.addingTimeInterval(120)),
+                // al vencer, la tarjeta se marca obsoleta y cambia al estado "terminado"
+                content: .init(state: state, staleDate: state.endAt),
                 pushType: nil
             )
             current = activity
@@ -52,9 +57,16 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         call.resolve()
     }
 
+    /// Descansos que se registraron desde la tarjeta mientras la app no estaba delante.
+    @objc func pending(_ call: CAPPluginCall) {
+        call.resolve(["items": PendingRest.drain()])
+    }
+
     private func endCurrent() {
-        guard #available(iOS 16.2, *), let activity = current as? Activity<RestAttributes> else { return }
+        guard #available(iOS 16.2, *) else { return }
         current = nil
-        Task { await activity.end(nil, dismissalPolicy: .immediate) }
+        // puede haber quedado una tarjeta viva de un arranque anterior de la app
+        let all = Activity<RestAttributes>.activities
+        Task { for activity in all { await activity.end(nil, dismissalPolicy: .immediate) } }
     }
 }

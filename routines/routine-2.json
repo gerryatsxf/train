@@ -1,0 +1,387 @@
+{
+  "$comment": "Rutina de entrenamiento. 'weeks' es cuantas semanas dura. Los dias se numeran por su orden en esta lista: el primero es el Dia 1, el segundo el Dia 2, etc. No hay fechas ni dias de la semana. Un bloque con dos ejercicios es una biserie y se encadenan sin descanso; con uno es un ejercicio suelto. 'equip' fija el tipo de peso, 'unit' la unidad y 'peso' el valor de referencia. El esfuerzo percibido (Borg) no se define aqui: se anota en la app.",
+  "id": "routine-2",
+  "name": "Plan 2 · Tren inferior / superior",
+  "weeks": 4,
+  "days": [
+    {
+      "id": "tren-inferior",
+      "name": "Tren inferior",
+      "blocks": [
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "dumbbell-front-squat",
+              "name": "Dumbbell front squat",
+              "series": 5,
+              "reps": "12",
+              "equip": "db2",
+              "unit": "lb",
+              "peso": "2 × 25",
+              "notes": "25 lb por lado"
+            }
+          ]
+        },
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "sentadilla-hack",
+              "name": "Sentadilla hack",
+              "series": 4,
+              "reps": "8",
+              "equip": "bar",
+              "unit": "kg",
+              "peso": "20",
+              "notes": "10 kg por lado"
+            }
+          ]
+        },
+        {
+          "label": "1ª Biserie",
+          "ex": [
+            {
+              "id": "step-up-c-mancuernas",
+              "name": "Step up c/mancuernas",
+              "series": 4,
+              "reps": "12",
+              "equip": "db2",
+              "unit": "lb",
+              "peso": "2 × 15",
+              "notes": "15-25 lb por lado"
+            },
+            {
+              "id": "aductores-en-maquina",
+              "name": "Aductores en máquina",
+              "series": 4,
+              "reps": "8",
+              "equip": "p1",
+              "unit": "lb",
+              "tempo": "1:3",
+              "peso": "100",
+              "notes": "100-110 lb"
+            }
+          ]
+        },
+        {
+          "label": "2ª Biserie",
+          "ex": [
+            {
+              "id": "pantorrilla-en-smith",
+              "name": "Pantorrilla en Smith",
+              "series": 3,
+              "reps": "12",
+              "equip": "bar",
+              "unit": "kg",
+              "peso": "35"
+            },
+            {
+              "id": "planchas",
+              "name": "Planchas",
+              "series": 3,
+              "reps": "20 seg",
+              "equip": "bw100",
+              "unit": "kg"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tren-superior",
+      "name": "Tren superior",
+      "blocks": [
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "bar-hang-hollow",
+              "name": "Bar hang hollow",
+              "series": 4,
+              "reps": "8-10 seg",
+              "equip": "bw100",
+              "unit": "kg"
+            }
+          ]
+        },
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "dominadas-australianas",
+              "name": "Dominadas australianas",
+              "series": 4,
+              "reps": "8",
+              "equip": "bw50",
+              "unit": "kg"
+            }
+          ]
+        },
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "curl-de-biceps-supino",
+              "name": "Curl de bíceps supino",
+              "series": 4,
+              "reps": "12",
+              "equip": "db2",
+              "unit": "kg",
+              "peso": "2 × 5"
+            }
+          ]
+        },
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "remo-con-barra",
+              "name": "Remo con barra",
+              "series": 4,
+              "reps": "8",
+              "equip": "bar",
+              "unit": "kg",
+              "peso": "18"
+            }
+          ]
+        },
+        {
+          "label": "1ª Biserie",
+          "ex": [
+            {
+              "id": "curl-de-biceps-neutro",
+              "name": "Curl de bíceps neutro",
+              "series": 4,
+              "reps": "8",
+              "equip": "db2",
+              "unit": "kg",
+              "peso": "2 × 6"
+            },
+            {
+              "id": "remo-agarre-v",
+              "name": "Remo agarre V",
+              "series": 3,
+              "reps": "8",
+              "equip": "p1",
+              "unit": "lb",
+              "peso": "55"
+            }
+          ]
+        },
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "jalon-unilateral-con-polea-alta",
+              "name": "Jalón unilateral con polea alta",
+              "series": 3,
+              "reps": "8",
+              "equip": "p2",
+              "unit": "lb",
+              "peso": "25"
+            }
+          ]
+        },
+        {
+          "label": "Cardio",
+          "ex": [
+            {
+              "id": "caminadora",
+              "name": "Caminadora",
+              "series": 1,
+              "reps": "15 min",
+              "equip": "bw100",
+              "unit": "kg"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tren-inferior-2",
+      "name": "Tren inferior",
+      "blocks": [
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "peso-muerto-sumo-c-mancuernas",
+              "name": "Peso muerto sumo c/mancuernas",
+              "series": 4,
+              "reps": "12, 10, 8, 6",
+              "equip": "db1",
+              "unit": "lb",
+              "peso": "25",
+              "notes": "Progresión 25-35-45-55 lb"
+            }
+          ]
+        },
+        {
+          "label": "1ª Biserie",
+          "ex": [
+            {
+              "id": "prensa-piernas-separadas",
+              "name": "Prensa piernas separadas",
+              "series": 4,
+              "reps": "8",
+              "equip": "bar",
+              "unit": "kg",
+              "peso": "96"
+            },
+            {
+              "id": "curl-femoral-acostado",
+              "name": "Curl femoral acostado",
+              "series": 4,
+              "reps": "8",
+              "equip": "p1",
+              "unit": "lb",
+              "peso": "35"
+            }
+          ]
+        },
+        {
+          "label": "2ª Biserie",
+          "ex": [
+            {
+              "id": "patada-de-gluteo",
+              "name": "Patada de glúteo",
+              "series": 4,
+              "reps": "8",
+              "equip": "p1",
+              "unit": "lb",
+              "peso": "50",
+              "notes": "50-60 lb"
+            },
+            {
+              "id": "desplante-lateral",
+              "name": "Desplante lateral",
+              "series": 4,
+              "reps": "8",
+              "equip": "db1",
+              "unit": "lb",
+              "peso": "25"
+            }
+          ]
+        },
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "maquina-de-abductor",
+              "name": "Máquina de abductor",
+              "series": 3,
+              "reps": "15",
+              "equip": "p1",
+              "unit": "lb",
+              "peso": "60"
+            }
+          ]
+        },
+        {
+          "label": "Cardio",
+          "ex": [
+            {
+              "id": "caminadora-2",
+              "name": "Caminadora",
+              "series": 1,
+              "reps": "15 min",
+              "equip": "bw100",
+              "unit": "kg"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tren-superior-2",
+      "name": "Tren superior",
+      "blocks": [
+        {
+          "label": "Único",
+          "ex": [
+            {
+              "id": "press-de-banca-inclinado",
+              "name": "Press de banca inclinado",
+              "series": 4,
+              "reps": "12",
+              "equip": "bar",
+              "unit": "lb",
+              "notes": "Barra o mancuernas de 25 lb"
+            }
+          ]
+        },
+        {
+          "label": "1ª Biserie",
+          "ex": [
+            {
+              "id": "press-de-banca-horizontal",
+              "name": "Press de banca horizontal",
+              "series": 4,
+              "reps": "12",
+              "equip": "bar",
+              "unit": "lb",
+              "tempo": "3:1",
+              "notes": "Barra o mancuernas de 25 lb"
+            },
+            {
+              "id": "press-militar-c-mancuerna",
+              "name": "Press militar c/mancuerna",
+              "series": 4,
+              "reps": "8",
+              "equip": "db2",
+              "unit": "kg",
+              "peso": "2 × 5"
+            }
+          ]
+        },
+        {
+          "label": "2ª Biserie",
+          "ex": [
+            {
+              "id": "laterales-con-mancuerna",
+              "name": "Laterales con mancuerna",
+              "series": 4,
+              "reps": "8",
+              "equip": "db2",
+              "unit": "kg",
+              "peso": "2 × 6",
+              "notes": "6-8 kg por lado"
+            },
+            {
+              "id": "extension-de-triceps-con-soga",
+              "name": "Extensión de tríceps con soga",
+              "series": 4,
+              "reps": "15",
+              "equip": "p1",
+              "unit": "lb",
+              "peso": "10",
+              "notes": "10-15 lb"
+            }
+          ]
+        },
+        {
+          "label": "3ª Biserie",
+          "ex": [
+            {
+              "id": "pike-push-up",
+              "name": "Pike push up",
+              "series": 3,
+              "reps": "6-8",
+              "equip": "bw75",
+              "unit": "kg"
+            },
+            {
+              "id": "fondos-en-maquina",
+              "name": "Fondos en máquina",
+              "series": 3,
+              "reps": "12-15",
+              "equip": "p1",
+              "unit": "lb"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
