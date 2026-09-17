@@ -714,7 +714,7 @@
     <div class="switch" id="swBg"><i></i></div>
   </div>
   <div class="row">
-    <p>Datos<small>Todo se guarda en este dispositivo</small></p>
+    <p>Datos<small>Todo se guarda en este dispositivo. Exportar comparte el registro de la rutina activa</small></p>
     <div style="display:flex;gap:8px">
       <button class="btn" id="btnExport">Exportar</button>
       <button class="btn danger" id="btnWipe">Borrar todo</button>
@@ -2367,13 +2367,79 @@ swBg.onclick = () => {
 };
 restSel.onchange = () => setPref('rest', +restSel.value);
 
-document.getElementById('btnExport').onclick = () => {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type:'application/json' });
+/* ---- exportar el registro de la rutina activa ---- */
+// solo lo que el usuario anotó: semanas y ejercicios sin datos no se incluyen
+function buildExport(){
+  const registro = [];
+  for(let w = 1; w <= TOTAL_WEEKS; w++){
+    const log = state.log[logKey(w)] || {};
+    const notas = state.notes[logKey(w)] || {};
+    const dias = [];
+    PROGRAM.forEach((d, i) => {
+      const ejercicios = [];
+      d.blocks.forEach(b => b.ex.forEach(x => {
+        const e = log[x.id];
+        if(!e) return;
+        const series = e.sets.map((s, k) => ({
+          serie: k + 1, peso: s.w || '', reps: s.r || '', hecha: !!s.d, descanso: s.rest || 0
+        }));
+        const nota = (e.notes || '').trim();
+        const hayAlgo = series.some(s => s.peso || s.reps || s.hecha || s.descanso) || e.borg || nota;
+        if(!hayAlgo) return;
+        const g = gear(x);
+        ejercicios.push({
+          id: x.id, nombre: x.name, bloque: b.label,
+          carga: { tipo: g.eq.label, unidad: g.unit, proporcion: g.pct + '%', objetivo: g.target || '' },
+          borg: e.borg || '', nota, series
+        });
+      }));
+      const nota = (notas[d.id] || '').trim();
+      if(ejercicios.length || nota) dias.push({ dia: i + 1, id: d.id, nombre: d.name, nota, ejercicios });
+    });
+    if(dias.length) registro.push({ semana: w, dias });
+  }
+  return {
+    app: 'train',
+    version: CONFIG.version || 'local',
+    exportado: new Date().toISOString(),
+    rutina: { id: ROUTINE.id, nombre: ROUTINE.name, archivo: ROUTINE.path, semanas: TOTAL_WEEKS },
+    ajustes: state.prefs,
+    registro
+  };
+}
+
+async function exportarRegistro(){
+  const datos = buildExport();
+  if(!datos.registro.length){ toast('Aún no hay nada registrado en esta rutina'); return; }
+  const texto = JSON.stringify(datos, null, 2);
+  const nombre = `train-${datos.rutina.id}-${new Date().toISOString().slice(0,10)}.json`;
+
+  // en nativo hay que escribir el archivo antes: la hoja de compartir necesita una ruta real
+  const FS = plug('Filesystem'), SH = plug('Share');
+  if(FS && SH){
+    try{
+      const r = await FS.writeFile({ path:nombre, data:texto, directory:'CACHE', encoding:'utf8' });
+      await SH.share({ title:'Registro de entrenamiento', files:[r.uri] });
+      return;
+    }catch(e){
+      if(/cancel/i.test(String(e && e.message || e))) return;
+      toast('No se pudo compartir'); return;
+    }
+  }
+
+  const archivo = new File([texto], nombre, { type:'application/json' });
+  if(navigator.canShare && navigator.canShare({ files:[archivo] })){
+    try{ await navigator.share({ files:[archivo], title:nombre }); return; }
+    catch(e){ if(e && e.name === 'AbortError') return; }
+  }
+  const url = URL.createObjectURL(new Blob([texto], { type:'application/json' }));
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'entrenamiento-gerardo-' + new Date().toISOString().slice(0,10) + '.json';
-  a.click(); URL.revokeObjectURL(a.href);
-};
+  a.href = url; a.download = nombre; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('Archivo descargado');
+}
+document.getElementById('btnExport').onclick = exportarRegistro;
 document.getElementById('btnWipe').onclick = async () => {
   const ok = await askConfirm({
     title:'Borrar todos los datos',
