@@ -1631,12 +1631,33 @@ function startTimer(sec, target){
   tStartAt = Date.now();
   tEndAt = tStartAt + sec * 1000;
   timerSet = target || null;
+  keepRest();
   tEl.classList.add('show');
   clearInterval(tInt);
   armAlarm(sec);
   startLiveActivity(sec, target);
   primeTicks();
   tick(); markTimingSet();
+  tInt = setInterval(tick, 250);
+}
+/* iOS puede matar el WebView en segundo plano y Capacitor lo recarga: sin guardar el descanso
+   en curso se perdía el contador y, al volver, se cancelaba la alarma que seguía agendada. */
+const REST_KEY = 'train.gm.rest';
+function keepRest(){
+  try{ localStorage.setItem(REST_KEY, JSON.stringify({ startAt:tStartAt, endAt:tEndAt, target:timerSet })); }catch(e){}
+}
+function dropRest(){
+  try{ localStorage.removeItem(REST_KEY); }catch(e){}
+}
+function restoreRest(){
+  let r = null;
+  try{ r = JSON.parse(localStorage.getItem(REST_KEY) || 'null'); }catch(e){}
+  if(!r || !r.endAt || (r.target && !findEx(r.target.exId))){ dropRest(); return; }
+  tStartAt = r.startAt; tEndAt = r.endAt; timerSet = r.target || null;
+  tEl.classList.add('show');
+  const left = (tEndAt - Date.now()) / 1000;
+  if(left > 0) armAlarm(left);           // mismos IDs: reemplaza lo agendado, no lo duplica
+  tLeft = Math.max(0, Math.ceil(left)); paint();
   tInt = setInterval(tick, 250);
 }
 // tarjeta en la pantalla bloqueada y la Isla Dinámica; cuenta sola con la fecha de fin
@@ -1696,11 +1717,16 @@ function scheduleTicks(){
 // el conteo se deriva del reloj: iOS congela los intervalos con la pantalla bloqueada
 function tick(){
   pruneStaleAlarm();
+  const left = Math.max(0, Math.ceil((tEndAt - Date.now()) / 1000));
+  // oculta, los avisos son nativos; solo se sigue la cuenta para no cruzar umbrales de golpe al volver
+  if(document.hidden && nativeAlarm()){
+    if(left !== tLeft){ tLeft = left; paint(); }
+    return;
+  }
   const native = !!plug('NativeSound');
   const ticking = pref('ticks');
   if(!native && ticking) scheduleTicks();
   const prev = tLeft;
-  const left = Math.max(0, Math.ceil((tEndAt - Date.now()) / 1000));
   if(left !== tLeft){
     tLeft = left; paint();
     if(left > 0){
@@ -1710,11 +1736,15 @@ function tick(){
   }
   if(Date.now() >= tEndAt){
     const elapsed = Math.round((Date.now() - tStartAt) / 1000);
+    const late = nativeAlarm() && Date.now() - tEndAt > 1500;   // terminó oculta: ya sonó en nativo
     const alreadyRang = alarmDidRing();
     if(alreadyRang) releaseAlarm();  // ya está sonando: se deja terminar
     stopTimer(true);                 // si no sonó, disarmAlarm() mata los nodos agendados
-    if(!alreadyRang) sfx('alert');
-    buzz('strong'); restEnded(elapsed);
+    if(!late){
+      if(!alreadyRang) sfx('alert');
+      buzz('strong');
+    }
+    restEnded(elapsed);
   }
 }
 // avisos al cruzar los umbrales; si se saltan varios de golpe suena solo el más urgente
@@ -1732,6 +1762,7 @@ function stopTimer(keepTarget){
   tLeft = 0; tEndAt = 0; tickAt = 0;
   tEl.classList.remove('show','hot');
   disarmAlarm();
+  dropRest();
   // la tarjeta no se cierra aquí: se queda anunciando el fin hasta que se registre
   if(!keepTarget){ timerSet = null; markTimingSet(); }
 }
@@ -1969,6 +2000,7 @@ document.getElementById('timerStop').onclick = () => {
 };
 document.getElementById('timerAdd').onclick = () => {
   tEndAt += 30000;
+  keepRest();
   armAlarm(Math.max(0, (tEndAt - Date.now()) / 1000));
   startLiveActivity(Math.max(0, (tEndAt - Date.now()) / 1000), timerSet);
   tick();
@@ -2149,17 +2181,19 @@ function buzz(name){
 }
 
 /* ---- alarma con la pantalla bloqueada ----
-   En la app nativa la dispara una notificación local: el sistema la lanza aunque iOS haya
-   congelado el JS, sin tener que mantener ocupada la sesión de audio. En el navegador se
-   agenda por adelantado en la línea de tiempo del AudioContext. */
+   En la app nativa la agenda NativeSound de una sola llamada: notificaciones del sistema (sonido
+   y vibración aunque iOS congele el JS) y los avisos de 30 s, 10 s y fin por audio nativo, que
+   ignora el interruptor de silencio. En el navegador se agenda en la línea de tiempo del AudioContext. */
 
 // se consultan en cada uso: los plugins pueden registrarse después de que corre este script
 function plug(name){
   const P = window.Capacitor && window.Capacitor.Plugins;
   return (P && P[name]) || null;
 }
-const REST_NOTIF = 8801;
-const WARN_NOTIF = 8802;
+function nativeAlarm(){
+  const NS = plug('NativeSound');
+  return NS && NS.armRest ? NS : null;
+}
 const REST_ACTIONS = 'REST_DONE';
 let notifOk = null;
 
@@ -2174,44 +2208,23 @@ async function notifAllowed(){
   }catch(e){ notifOk = false; }
   return notifOk;
 }
-// con la pantalla bloqueada el JS está congelado: la vibración solo puede venir del sistema,
-// así que el aviso de los 10 s también se programa como notificación
-async function scheduleRestNotif(seconds, target){
-  const LN = plug('LocalNotifications');
-  if(!LN || !(await notifAllowed())) return;
+// mismo formato que el prefijo de RestIntents.swift: la tarjeta borra solo los avisos de su serie
+function restKey(t){ return t ? `rest.${t.week}.${t.exId}.${t.i}.` : 'rest.x.'; }
+// IDs únicos por descanso: un borrado tardío del anterior nunca alcanza al nuevo
+function armNative(NS, seconds, target){
   const ex = target ? findEx(target.exId) : null;
-  const who = ex ? `${ex.name}${target ? ' · S' + (target.i + 1) : ''}` : 'Siguiente serie';
-  const list = [{
-    id: REST_NOTIF,
-    title: '⏰ Descanso terminado',
-    body: who,
-    schedule: { at: new Date(Date.now() + seconds * 1000), allowWhileIdle: true },
-    sound: 'default',
-    actionTypeId: REST_ACTIONS,
-    extra: target ? { exId:target.exId, i:target.i, week:target.week, at:tStartAt } : null
-  }];
-  if(seconds > 13){
-    list.push({
-      id: WARN_NOTIF,
-      title: '⏱ Faltan 10 segundos',
-      body: who,
-      schedule: { at: new Date(Date.now() + (seconds - 10) * 1000), allowWhileIdle: true },
-      sound: 'default'
-    });
-  }
-  try{
-    await LN.cancel({ notifications:[{ id:REST_NOTIF }, { id:WARN_NOTIF }] });
-    await LN.schedule({ notifications: list });
-  }catch(e){}
-}
-function cancelRestNotif(){
-  const LN = plug('LocalNotifications');
-  if(!LN) return;
-  const ids = [{ id:REST_NOTIF }, { id:WARN_NOTIF }];
-  try{
-    LN.cancel({ notifications:ids });
-    if(LN.removeDeliveredNotifications) LN.removeDeliveredNotifications({ notifications:ids });
-  }catch(e){}
+  const who = ex ? `${ex.name} · S${target.i + 1}` : 'Siguiente serie';
+  const key = restKey(target) + tStartAt + '.';
+  const end = { id:key + 'end', in:seconds, title:'⏰ Descanso terminado', body:who, category:REST_ACTIONS };
+  if(target) end.extra = { exId:target.exId, i:target.i, week:target.week, at:tStartAt };
+  const notifs = [end];
+  if(seconds > 13) notifs.push({ id:key + 'w10', in:seconds - 10, title:'⏱ Faltan 10 segundos', body:who });
+  const cues = !pref('sounds') ? [] : [
+    { in:seconds - HOT_AT, parts:SFX.mark30, vibrate:true },
+    { in:seconds - 10, parts:SFX.mark10 },
+    { in:seconds, parts:SFX.alert }
+  ].filter(c => c.in > 0);
+  NS.armRest({ notifs, cues }).catch(() => {});
 }
 
 /* Sin `foreground` ni `requiresAuthentication` el sistema ejecuta la acción sin desbloquear,
@@ -2220,6 +2233,7 @@ function cancelRestNotif(){
 function initNotifActions(){
   const LN = plug('LocalNotifications');
   if(!LN || !LN.registerActionTypes) return;
+  notifAllowed();                          // el permiso se pide al abrir, no a mitad de una serie
   LN.registerActionTypes({
     types: [{ id: REST_ACTIONS, actions: [{ id:'registrar', title:'Registrar descanso' }] }]
   }).catch(() => {});
@@ -2231,7 +2245,7 @@ function initNotifActions(){
     if(timerSet && timerSet.exId === x.exId && timerSet.i === x.i && timerSet.week === x.week) stopTimer();
     saveSetRest({ exId:x.exId, i:x.i, week:x.week }, seconds);
     stopLiveActivity();
-    cancelRestNotif();
+    if(!tInt) disarmAlarm();               // si ya corre otro descanso, sus avisos se respetan
     if(resolveConfirm) endConfirm(false);
   });
 }
@@ -2239,8 +2253,9 @@ function initNotifActions(){
 let alarmNodes = [], alarmArmed = false, alarmAt = 0, alarmWallAt = 0, keepAlive = null;
 
 function armAlarm(seconds){
+  const NS = nativeAlarm();
+  if(NS){ armNative(NS, seconds, timerSet); return; }   // reemplaza al anterior sin cancelarlo antes
   disarmAlarm();
-  if(plug('LocalNotifications')){ scheduleRestNotif(seconds, timerSet); return; }
   const ctx = audio();
   if(!ctx || ctx.state !== 'running' || !pref('sounds')) return;
   alarmAt = ctx.currentTime + seconds;
@@ -2258,7 +2273,8 @@ function pruneStaleAlarm(){
   if(alarmArmed && Date.now() > alarmWallAt + 3000 && !alarmDidRing()) disarmAlarm();
 }
 function disarmAlarm(){
-  cancelRestNotif();
+  const NS = nativeAlarm();
+  if(NS) NS.disarmRest().catch(() => {});
   alarmNodes.forEach(n => {
     try{ n.g.gain.cancelScheduledValues(0); n.g.gain.value = 0; }catch(e){}
     try{ n.src.stop(0); }catch(e){}
@@ -2320,7 +2336,7 @@ function syncRoutineInfo(){
 routineSel.onchange = () => {
   const r = ROUTINES.find(x => x.path === routineSel.value);
   if(!r || r.path === ROUTINE.path) return;
-  stopTimer(); stopLiveActivity(); cancelRestNotif();   // el descanso apuntaba a otro programa
+  stopTimer(); stopLiveActivity();   // el descanso apuntaba a otro programa
   state.week = 1;
   applyRoutine(r);
   resetCards();
@@ -2580,6 +2596,7 @@ function toast(msg){
   state.week = Math.min(Math.max(state.week, 1), TOTAL_WEEKS);
   applyTheme();
   if(plug('LocalNotifications')) document.getElementById('rowBg').hidden = true;
+  restoreRest();                           // antes que las acciones pendientes: pueden darlo por registrado
   initNotifActions();
   fillRoutineSel();
   refresh();

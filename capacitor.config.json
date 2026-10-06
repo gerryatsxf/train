@@ -1,5 +1,10 @@
 {
   "appId": "com.gerardo.train",
   "appName": "Train",
-  "webDir": "www"
+  "webDir": "www",
+  "plugins": {
+    "LocalNotifications": {
+      "presentationOptions": []
+    }
+  }
 }

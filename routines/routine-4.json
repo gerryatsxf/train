@@ -1,0 +1,339 @@
+{
+  "id": "es1-femoral-gluteo-abductor-espalda-bicep-pecho-tricep-cuadricep-aductor",
+  "name": "ES1 · Femoral/Gluteo/Abductor · Espalda/Bicep · Pecho/Tricep · Cuadricep/Adductor",
+  "weeks": 4,
+  "days": [
+    {
+      "id": "femoral-gluteo-abductor",
+      "name": "Femoral/Gluteo/Abductor",
+      "blocks": [
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "peso-muerto",
+              "name": "Peso muerto",
+              "series": 4,
+              "reps": "10-10-10-10",
+              "equip": "bar",
+              "unit": "lb",
+              "peso": "185"
+            }
+          ]
+        },
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "hip-thrust",
+              "name": "Hip Thrust",
+              "series": 4,
+              "reps": "12-12-12-12",
+              "equip": "bar",
+              "unit": "lb",
+              "peso": "135"
+            }
+          ]
+        },
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "curl-femoral-sentado",
+              "name": "Curl femoral sentado",
+              "series": 4,
+              "reps": "12-12-12-12",
+              "equip": "p1",
+              "unit": "lb",
+              "peso": "110"
+            }
+          ]
+        },
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "abductores",
+              "name": "Abductores",
+              "series": 4,
+              "reps": "15-15-15-15",
+              "equip": "p1",
+              "unit": "lb",
+              "peso": "270"
+            }
+          ]
+        },
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "pantorrilla",
+              "name": "Pantorrilla",
+              "series": 4,
+              "reps": "15-15-15-15",
+              "equip": "bar",
+              "unit": "lb",
+              "peso": "230"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "espalda-bicep",
+      "name": "Espalda/Bicep",
+      "blocks": [
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "jalon-al-pecho",
+              "name": "Jalón al pecho",
+              "series": 4,
+              "reps": "12-12-12-12",
+              "equip": "p1",
+              "unit": "lb",
+              "peso": "140"
+            }
+          ]
+        },
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "remo-barra",
+              "name": "Remo barra",
+              "series": 4,
+              "reps": "12-12-12-12",
+              "equip": "bar",
+              "unit": "lb",
+              "peso": "135"
+            }
+          ]
+        },
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "rear-delt",
+              "name": "Rear Delt",
+              "series": 4,
+              "reps": "15-15-14-13",
+              "equip": "p1",
+              "unit": "lb",
+              "peso": "110",
+              "notes": "La rutina indica 15-15-14-13; la 4.ª serie no está indicada y se omite."
+            }
+          ]
+        },
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "encogimiento",
+              "name": "Encogimiento",
+              "series": 4,
+              "reps": "15-15-15-15",
+              "equip": "bar",
+              "unit": "kg"
+            }
+          ]
+        },
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "curl-mancuerna",
+              "name": "Curl mancuerna",
+              "series": 4,
+              "reps": "15-14-13-12",
+              "equip": "db2",
+              "unit": "lb",
+              "peso": "2 × 20"
+            }
+          ]
+        },
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "curl-bayesian",
+              "name": "Curl Bayesian",
+              "series": 4,
+              "reps": "15-14-13-12",
+              "equip": "p1",
+              "unit": "lb",
+              "peso": "20"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pecho-tricep",
+      "name": "Pecho/Tricep",
+      "blocks": [
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "press-de-pecho",
+              "name": "Press de pecho",
+              "series": 4,
+              "reps": "10-9-8-6",
+              "equip": "bar",
+              "unit": "kg",
+              "peso": "60"
+            }
+          ]
+        },
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "press-inclinado-mancuerna",
+              "name": "Press inclinado mancuerna",
+              "series": 4,
+              "reps": "10-8-6-5",
+              "equip": "db2",
+              "unit": "lb",
+              "peso": "2 × 40"
+            }
+          ]
+        },
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "pec-fly",
+              "name": "Pec Fly",
+              "series": 4,
+              "reps": "15-15-15-12",
+              "equip": "p1",
+              "unit": "lb",
+              "peso": "120"
+            }
+          ]
+        },
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "elevacion-lateral",
+              "name": "Elevación lateral",
+              "series": 4,
+              "reps": "15-15-15-15",
+              "equip": "bar",
+              "unit": "kg",
+              "notes": "2 plates · seguir hasta controlar el peso"
+            }
+          ]
+        },
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "press-frances",
+              "name": "Press francés",
+              "series": 4,
+              "reps": "12-11-9-7",
+              "equip": "bar",
+              "unit": "lb",
+              "peso": "50"
+            }
+          ]
+        },
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "extension-tricep",
+              "name": "Extensión Tricep",
+              "series": 4,
+              "reps": "12-11-10-9",
+              "equip": "p1",
+              "unit": "lb",
+              "peso": "35"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cuadricep-aductor",
+      "name": "Cuadricep/Adductor",
+      "blocks": [
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "sentadilla-libre",
+              "name": "Sentadilla libre",
+              "series": 4,
+              "reps": "10-9-8-7",
+              "equip": "bar",
+              "unit": "lb",
+              "peso": "180"
+            }
+          ]
+        },
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "prensa",
+              "name": "Prensa",
+              "series": 4,
+              "reps": "12-12-12-9",
+              "equip": "bar",
+              "unit": "lb",
+              "peso": "360"
+            }
+          ]
+        },
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "extension-de-pierna",
+              "name": "Extensión de pierna",
+              "series": 4,
+              "reps": "12-12-11-10",
+              "equip": "p1",
+              "unit": "lb",
+              "peso": "100"
+            }
+          ]
+        },
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "aductor",
+              "name": "Aductor",
+              "series": 4,
+              "reps": "15-15-15-15",
+              "equip": "p1",
+              "unit": "lb",
+              "peso": "210"
+            }
+          ]
+        },
+        {
+          "label": "Ejercicio principal",
+          "ex": [
+            {
+              "id": "pantorrilla-2",
+              "name": "Pantorrilla",
+              "series": 4,
+              "reps": "15-15-15-15",
+              "equip": "bar",
+              "unit": "lb",
+              "peso": "200"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

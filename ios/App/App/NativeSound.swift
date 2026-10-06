@@ -1,7 +1,9 @@
 import Foundation
 import AVFoundation
+import AudioToolbox
 import CoreHaptics
 import UIKit
+import UserNotifications
 import Capacitor
 
 /// Reproduce los avisos fuera del WebView. Es la única forma de sonar a volumen multimedia,
@@ -13,15 +15,30 @@ public class NativeSoundPlugin: CAPPlugin, CAPBridgedPlugin {
     public let jsName = "NativeSound"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "play", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "haptic", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "haptic", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "armRest", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "disarmRest", returnType: CAPPluginReturnPromise)
     ]
 
     private let synth = ToneSynth()
+    private lazy var alarm = RestAlarm(synth: synth)
 
     @objc func play(_ call: CAPPluginCall) {
         NativeSoundPlugin.ensureMixableSession()
         let parts = call.getArray("parts", JSObject.self) ?? []
         synth.play(parts.map { Part(from: $0) })
+        call.resolve()
+    }
+
+    @objc func armRest(_ call: CAPPluginCall) {
+        let notices = (call.getArray("notifs", JSObject.self) ?? []).compactMap(RestAlarm.Notice.init)
+        let cues = (call.getArray("cues", JSObject.self) ?? []).map(RestAlarm.Cue.init)
+        alarm.arm(notices: notices, cues: cues)
+        call.resolve()
+    }
+
+    @objc func disarmRest(_ call: CAPPluginCall) {
+        alarm.disarm()
         call.resolve()
     }
 
@@ -63,6 +80,117 @@ public class NativeSoundPlugin: CAPPlugin, CAPBridgedPlugin {
             }
         }
         call.resolve()
+    }
+}
+
+/// Avisos del descanso agendados en nativo, de una sola llamada: con la pantalla bloqueada iOS
+/// congela el WebView cuando quiere, así que nada de esto puede depender del JS.
+final class RestAlarm {
+    struct Notice {
+        let id: String
+        let delay: Double
+        let title: String
+        let body: String
+        let category: String?
+        let extra: JSObject?
+
+        init?(_ js: JSObject) {
+            guard let id = js["id"] as? String, let delay = js["in"] as? Double else { return nil }
+            self.id = id
+            self.delay = delay
+            title = js["title"] as? String ?? ""
+            body = js["body"] as? String ?? ""
+            category = js["category"] as? String
+            extra = js["extra"] as? JSObject
+        }
+
+        var request: UNNotificationRequest {
+            let content = UNMutableNotificationContent()
+            content.title = title
+            content.body = body
+            content.sound = .default
+            // atraviesa los modos Concentración si la app tiene la capacidad Time Sensitive
+            content.interruptionLevel = .timeSensitive
+            content.threadIdentifier = "rest"
+            if let category = category { content.categoryIdentifier = category }
+            // la clave que lee el plugin LocalNotifications para entregar `extra` al JS
+            if let extra = extra { content.userInfo = ["cap_extra": extra] }
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, delay), repeats: false)
+            return UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+        }
+    }
+
+    struct Cue {
+        let delay: Double
+        let parts: [Part]
+        let vibrate: Bool
+
+        init(_ js: JSObject) {
+            delay = js["in"] as? Double ?? 0
+            parts = (js["parts"] as? [JSObject] ?? []).map { Part(from: $0) }
+            vibrate = js["vibrate"] as? Bool ?? false
+        }
+    }
+
+    private let synth: ToneSynth
+    private var timers: [DispatchSourceTimer] = []
+    private var ids: [String] = []
+
+    init(synth: ToneSynth) {
+        self.synth = synth
+    }
+
+    func arm(notices: [Notice], cues: [Cue]) {
+        DispatchQueue.main.async {
+            self.cancelTimers()
+            let center = UNUserNotificationCenter.current()
+            let fresh = notices.map(\.id)
+            // el borrado es asíncrono: solo se tocan IDs ajenos para no alcanzar a los recién creados
+            let stale = self.ids.filter { !fresh.contains($0) }
+            if !stale.isEmpty {
+                center.removePendingNotificationRequests(withIdentifiers: stale)
+                center.removeDeliveredNotifications(withIdentifiers: stale)
+            }
+            self.ids = fresh
+            notices.forEach { center.add($0.request) }
+
+            guard !cues.isEmpty else { return }
+            // el motor encendido mantiene viva la app en segundo plano hasta que suenen los avisos
+            NativeSoundPlugin.ensureMixableSession()
+            self.synth.warmUp()
+            self.timers = cues.filter { $0.delay > 0 }.map(self.schedule)
+        }
+    }
+
+    func disarm() {
+        DispatchQueue.main.async {
+            self.cancelTimers()
+            guard !self.ids.isEmpty else { return }
+            let center = UNUserNotificationCenter.current()
+            center.removePendingNotificationRequests(withIdentifiers: self.ids)
+            center.removeDeliveredNotifications(withIdentifiers: self.ids)
+            self.ids = []
+        }
+    }
+
+    private func schedule(_ cue: Cue) -> DispatchSourceTimer {
+        let timer = DispatchSource.makeTimerSource(queue: .main)
+        // reloj de pared: el monotónico se detiene si el equipo duerme
+        timer.schedule(wallDeadline: .now() + cue.delay, leeway: .milliseconds(50))
+        timer.setEventHandler { [weak self] in
+            // con la app delante el aviso lo da el WebView
+            guard let self = self, UIApplication.shared.applicationState == .background else { return }
+            NativeSoundPlugin.ensureMixableSession()
+            self.synth.play(cue.parts)
+            if cue.vibrate { AudioServicesPlaySystemSound(kSystemSoundID_Vibrate) }
+        }
+        timer.resume()
+        return timer
+    }
+
+    private func cancelTimers() {
+        timers.forEach { $0.cancel() }
+        timers = []
     }
 }
 
@@ -145,6 +273,14 @@ final class ToneSynth {
     init() {
         engine.attach(player)
         engine.connect(player, to: engine.mainMixerNode, format: format)
+    }
+
+    func warmUp() {
+        queue.async { [weak self] in
+            guard let self = self else { return }
+            if !self.engine.isRunning { try? self.engine.start() }
+            if self.engine.isRunning && !self.player.isPlaying { self.player.play() }
+        }
     }
 
     func play(_ parts: [Part]) {

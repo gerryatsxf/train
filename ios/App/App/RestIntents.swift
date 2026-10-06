@@ -50,18 +50,20 @@ struct RegisterRestIntent: LiveActivityIntent {
     func perform() async throws -> some IntentResult {
         let seconds = max(0, Int(Date().timeIntervalSince(startedAt).rounded()))
         PendingRest.push(exId: exId, setIndex: setIndex, week: week, seconds: seconds)
-        cancelRestNotifications()
+        await cancelRestNotifications()
         await confirmOnActivity(seconds: seconds)
         return .result()
     }
 
-    /// Mismos identificadores que REST_NOTIF y WARN_NOTIF en index.html: al registrar
-    /// desde la tarjeta, la alarma y el aviso de los 10 s ya no tienen sentido.
-    private func cancelRestNotifications() {
-        let ids = ["8801", "8802"]
+    /// Prefijo con el mismo formato que restKey() en index.html: solo se retiran los avisos
+    /// de esta serie, nunca los de un descanso nuevo.
+    private func cancelRestNotifications() async {
+        let prefix = "rest.\(week).\(exId).\(setIndex)."
         let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: ids)
-        center.removeDeliveredNotifications(withIdentifiers: ids)
+        let pending = await center.pendingNotificationRequests().map(\.identifier)
+        let delivered = await center.deliveredNotifications().map(\.request.identifier)
+        center.removePendingNotificationRequests(withIdentifiers: pending.filter { $0.hasPrefix(prefix) })
+        center.removeDeliveredNotifications(withIdentifiers: delivered.filter { $0.hasPrefix(prefix) })
     }
 
     /// La tarjeta no se cierra: pasa a "registrado" para que se vea que quedó guardado.
